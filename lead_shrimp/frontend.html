@@ -86,6 +86,10 @@
     .chip.good{background:var(--green-soft);color:var(--green)}
     .chip.warn{background:var(--amber-soft);color:#9a6108}
     .work-picker{display:grid;gap:12px}
+    .work-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid #e1e9f4;border-radius:10px;background:#f8fbff}
+    .work-filters label{display:flex;align-items:center;gap:8px;color:#42536d;font-size:13px;font-weight:800}
+    .work-filters select{min-width:116px;border:1px solid #cfdceb;border-radius:8px;background:#fff;color:var(--ink);padding:7px 9px}
+    .work-filters input{width:16px;height:16px;accent-color:var(--brand)}
     .work-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;max-height:620px;overflow:auto}
     .work{display:grid;grid-template-columns:22px 74px minmax(0,1fr);gap:10px;align-items:start;border:1px solid #e5ebf4;border-radius:12px;padding:10px;background:#fbfdff}
     .work input{width:18px;height:18px;margin-top:26px}
@@ -119,7 +123,7 @@
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
     @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
-    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}}
+    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
 <body>
@@ -240,6 +244,17 @@
             <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
           </div>
           <div id="workPicker" class="work-picker body">
+            <div class="work-filters" aria-label="作品筛选">
+              <label for="workAgeFilter">发布时间
+                <select id="workAgeFilter">
+                  <option value="7">近 7 天</option>
+                  <option value="30" selected>近 30 天</option>
+                  <option value="90">近 90 天</option>
+                  <option value="0">全部作品</option>
+                </select>
+              </label>
+              <label for="includePinnedWorks"><input id="includePinnedWorks" type="checkbox"> 显示置顶作品</label>
+            </div>
             <div id="workList" class="work-list"><div class="empty">请先在“新增监控”里解析主页作品。</div></div>
           </div>
         </section>
@@ -300,6 +315,7 @@
 
   <script>
     const $ = id => document.getElementById(id);
+    const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
     let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[] };
 
@@ -410,27 +426,49 @@
       if(n>=10000)return (n/10000).toFixed(n>=100000?0:1)+'万';
       return String(n);
     }
-    function formatVideoDate(value){
+    function videoTimestamp(value){
       const n=Number(value);
-      if(Number.isFinite(n)&&n>0)return new Date(n*1000).toLocaleDateString('zh-CN');
-      return '未知';
+      if(Number.isFinite(n)&&n>0)return n>100000000000?n:Math.round(n*1000);
+      const parsed=Date.parse(String(value||''));
+      return Number.isFinite(parsed)?parsed:0;
     }
-    function renderWorks(monitor,videos){
-      state.pendingMonitor=monitor;
-      state.pendingVideos=videos||[];
-      $('workPickerMeta').textContent=`已解析 ${state.pendingVideos.length} 条作品，勾选后再采集评论。`;
-      $('workList').innerHTML=state.pendingVideos.length?state.pendingVideos.map((v,i)=>`<label class="work">
-        <input type="checkbox" data-work-index="${i}" ${v.selected!==false?'checked':''}>
+    function formatVideoDate(value){
+      const stamp=videoTimestamp(value);
+      return stamp?new Date(stamp).toLocaleDateString('zh-CN'):'待确认';
+    }
+    function defaultWorkSelected(v){
+      const stamp=videoTimestamp(v.publish_time||v.create_time);
+      return !v.pinned&&stamp>=Date.now()-DEFAULT_WORK_WINDOW_DAYS*86400000;
+    }
+    function renderWorkList(){
+      const days=Number($('workAgeFilter').value||DEFAULT_WORK_WINDOW_DAYS);
+      const includePinned=$('includePinnedWorks').checked;
+      const cutoff=days?Date.now()-days*86400000:0;
+      const visible=state.pendingVideos.map((v,index)=>({v,index})).filter(({v})=>{
+        const stamp=videoTimestamp(v.publish_time||v.create_time);
+        return (includePinned||!v.pinned)&&(!days||Boolean(stamp)&&stamp>=cutoff);
+      });
+      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。默认仅勾选近 30 天非置顶作品。`;
+      $('workList').innerHTML=visible.length?visible.map(({v,index})=>`<label class="work">
+        <input type="checkbox" data-work-index="${index}" ${v.selected===true?'checked':''}${v.selected===false?'':defaultWorkSelected(v)?' checked':''}>
         <img src="${escapeHtml(v.cover_url||'')}" alt="">
         <div>
           <div class="work-title">${escapeHtml(v.title||'未命名作品')}</div>
           <div class="meta" style="margin-top:8px">
             <span class="chip">点赞 ${escapeHtml(formatNumber(v.like_count))}</span>
             <span class="chip">评论 ${escapeHtml(formatNumber(v.comment_count))}</span>
-            <span class="chip">发布 ${escapeHtml(formatVideoDate(v.publish_time||v.create_time))}</span>
+            <span class="chip ${videoTimestamp(v.publish_time||v.create_time)?'':'warn'}">发布 ${escapeHtml(formatVideoDate(v.publish_time||v.create_time))}</span>
+            ${v.pinned?'<span class="chip warn">置顶</span>':''}
           </div>
         </div>
-      </label>`).join(''):'<div class="empty">没有解析到作品，请确认主页公开可访问，或直接粘贴单条视频链接。</div>';
+      </label>`).join(''):'<div class="empty">当前筛选下没有可采集作品。可调整发布时间范围，或显示置顶作品。</div>';
+    }
+    function renderWorks(monitor,videos){
+      state.pendingMonitor=monitor;
+      state.pendingVideos=videos||[];
+      $('workAgeFilter').value=String(DEFAULT_WORK_WINDOW_DAYS);
+      $('includePinnedWorks').checked=false;
+      renderWorkList();
     }
     async function resolveWorks(payload){
       setJob('正在解析作品','浏览器正在读取主页作品列表，暂不采集评论。','解析中');
@@ -575,6 +613,8 @@
     $('reloadMonitors').onclick=loadMonitors;
     $('reloadLeads').onclick=loadLeads;
     $('collectSelectedWorks').onclick=runSelectedWorks;
+    $('workAgeFilter').onchange=renderWorkList;
+    $('includePinnedWorks').onchange=renderWorkList;
     $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
     $('search').oninput=renderLeads;
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));

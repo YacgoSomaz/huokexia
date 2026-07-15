@@ -1032,7 +1032,10 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
                 }
                 if len(seen) >= recent_count:
                     return
-            for video in _read_page_videos(page):
+            # 页面卡片只含标题和点赞，通常没有发布时间、评论数和置顶状态。
+            # 优先等待作品接口；只有接口迟迟未返回时才退回到页面卡片。
+            dom_fallback_ready = not api_videos and tick >= 14
+            for video in (_read_page_videos(page) if dom_fallback_ready else []):
                 url_key = _video_key(video)
                 if not url_key or url_key in seen:
                     continue
