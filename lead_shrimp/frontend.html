@@ -33,27 +33,34 @@
     .btn.ghost{background:transparent;color:var(--brand);border:1px solid transparent;padding:8px 10px}
     .btn.warn{background:var(--amber)}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-    .hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:16px;margin-bottom:16px}
+    .hero{display:grid;gap:14px;margin-bottom:14px}
     .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .today{padding:20px;display:grid;gap:18px}
-    .today-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-    .today h2{font-size:20px;margin-bottom:6px}
-    .today p{color:var(--muted);line-height:1.55}
+    .today{padding:16px 18px;display:grid;grid-template-columns:minmax(260px,1.2fr) 1.2fr auto;gap:14px;align-items:center}
+    .today-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .today h2{font-size:19px;margin-bottom:4px}
+    .today p{color:var(--muted);line-height:1.45;font-size:13px}
     .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .metric{border:1px solid #e5ebf5;background:#fbfdff;border-radius:12px;padding:14px}
+    .metric{border:1px solid #e5ebf5;background:#fbfdff;border-radius:12px;padding:11px 12px}
     .metric span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-    .metric b{font-size:28px;line-height:1}
-    .next-card{background:linear-gradient(135deg,#10233f,#18395f);color:#f4f8ff;border-radius:13px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .metric b{font-size:24px;line-height:1}
+    .next-card{background:linear-gradient(135deg,#10233f,#18395f);color:#f4f8ff;border-radius:13px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:300px}
     .next-card b{display:block;font-size:15px;margin-bottom:4px;color:#9eeddc}
     .next-card small{display:block;color:#c4d3e8;line-height:1.45}
-    .setup{padding:16px;display:grid;gap:12px}
-    .step{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid #e8edf5;border-radius:12px;background:#fbfdff}
-    .setup.hidden,.step.hidden{display:none}
-    .step-no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:900}
+    .setup{padding:10px 12px;display:flex;gap:8px;align-items:center;overflow:auto}
+    .step{display:flex;align-items:center;gap:8px;min-width:190px;padding:9px 10px;border:1px solid #e8edf5;border-radius:12px;background:#fbfdff}
+    .step-no{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:900;font-size:12px;flex:0 0 auto}
     .step.done .step-no{background:var(--green-soft);color:var(--green)}
-    .step b{display:block;margin-bottom:2px}
-    .step small{color:var(--muted);line-height:1.35}
-    .main{display:grid;grid-template-columns:390px minmax(0,1fr);gap:16px;align-items:start}
+    .step.current{border-color:#9dbdff;background:#f5f9ff}
+    .step b{display:block;margin-bottom:1px;font-size:13px}
+    .step small{color:var(--muted);line-height:1.25;font-size:12px}
+    .step .btn{display:none}
+    .tabs{display:flex;gap:8px;align-items:center;padding:10px 12px;margin-bottom:14px;position:sticky;top:0;z-index:6;background:rgba(243,246,251,.94);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px}
+    .tab-btn{border:1px solid transparent;background:transparent;color:#41536d;border-radius:10px;padding:9px 13px;font-weight:900}
+    .tab-btn.active{background:#fff;color:var(--brand);border-color:#d6e0ee;box-shadow:0 8px 20px rgba(24,39,75,.07)}
+    .tab-spacer{flex:1}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .main{display:block}
     .stack{display:grid;gap:16px}
     .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
     .head h2{font-size:16px}
@@ -62,11 +69,11 @@
     .field{display:grid;gap:7px;margin-bottom:13px}
     .field label{font-size:13px;font-weight:800;color:#42536d}
     .field input,.field textarea,.field select{width:100%;border:1px solid #d8e2ef;border-radius:10px;background:#fff;color:var(--ink);outline:0;padding:11px 12px}
-    .field textarea{resize:vertical;min-height:118px}
+    .field textarea{resize:vertical;min-height:88px}
     .field input:focus,.field textarea:focus,.field select:focus{border-color:#91b5ff;box-shadow:0 0 0 4px #edf4ff}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
-    .monitor-list{display:grid;gap:10px;max-height:340px;overflow:auto}
+    .monitor-list{display:grid;gap:10px;max-height:620px;overflow:auto}
     .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:13px;display:grid;gap:10px}
     .monitor-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .monitor strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -75,9 +82,8 @@
     .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
     .chip.good{background:var(--green-soft);color:var(--green)}
     .chip.warn{background:var(--amber-soft);color:#9a6108}
-    .work-picker{display:none;border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
-    .work-picker.show{display:grid;gap:12px}
-    .work-list{display:grid;gap:10px;max-height:420px;overflow:auto}
+    .work-picker{display:grid;gap:12px}
+    .work-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;max-height:620px;overflow:auto}
     .work{display:grid;grid-template-columns:22px 74px minmax(0,1fr);gap:10px;align-items:start;border:1px solid #e5ebf4;border-radius:12px;padding:10px;background:#fbfdff}
     .work input{width:18px;height:18px;margin-top:26px}
     .work img{width:74px;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#e9eef7}
@@ -85,7 +91,7 @@
     .inbox{min-width:0}
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
-    .lead-list{display:grid;max-height:650px;overflow:auto}
+    .lead-list{display:grid;max-height:640px;overflow:auto}
     .lead{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
     .person{font-weight:900;line-height:1.35}
@@ -109,8 +115,8 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.hero,.main{grid-template-columns:1fr}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
-    @media(max-width:760px){.app{padding:16px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.step{grid-template-columns:30px minmax(0,1fr)}.step .btn{grid-column:1/-1}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:760px){.app{padding:16px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.tabs{overflow:auto}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -152,7 +158,7 @@
         </div>
       </section>
 
-      <section id="setupPanel" class="panel setup">
+      <section id="setupPanel" class="panel setup" aria-label="使用流程">
         <article id="stepLicense" class="step">
           <span class="step-no">1</span>
           <div><b>激活软件</b><small id="licenseStepText">输入卡密后开放采集和导出。</small></div>
@@ -171,8 +177,17 @@
       </section>
     </section>
 
+    <nav class="tabs" aria-label="工作区切换">
+      <button class="tab-btn active" data-tab="leadsTab" type="button">评论线索</button>
+      <button class="tab-btn" data-tab="addTab" type="button">新增监控</button>
+      <button class="tab-btn" data-tab="worksTab" type="button">选择作品</button>
+      <button class="tab-btn" data-tab="monitorsTab" type="button">监控列表</button>
+      <span class="tab-spacer"></span>
+      <button id="quickLogin" class="btn secondary" type="button">检查登录</button>
+    </nav>
+
     <section class="main">
-      <aside class="stack">
+      <section id="addTab" class="tab-panel">
         <section class="panel">
           <div class="head">
             <h2>新增监控</h2>
@@ -207,29 +222,26 @@
             </div>
             <button id="resolveWorksBtn" class="btn" type="submit" style="width:100%">解析作品列表</button>
             <p class="microcopy" style="margin-top:12px">仅采集公开评论；不会自动私信、关注或发布内容。重复评论按评论 ID 去重。</p>
-            <section id="workPicker" class="work-picker">
-              <div class="head" style="padding:0;border:0">
-                <div>
-                  <h2>选择要采集评论的作品</h2>
-                  <small id="workPickerMeta">先解析主页，确认作品后再采集评论。</small>
-                </div>
-                <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
-              </div>
-              <div id="workList" class="work-list"></div>
-            </section>
           </form>
         </section>
+      </section>
 
+      <section id="worksTab" class="tab-panel">
         <section class="panel">
           <div class="head">
-            <h2>监控对象</h2>
-            <button id="reloadMonitors" class="btn ghost">刷新</button>
+            <div>
+              <h2>选择要采集评论的作品</h2>
+              <small id="workPickerMeta">先解析主页，确认作品后再采集评论。</small>
+            </div>
+            <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
           </div>
-          <div id="monitors" class="body monitor-list"><div class="empty">暂无监控对象</div></div>
+          <div id="workPicker" class="work-picker body">
+            <div id="workList" class="work-list"><div class="empty">请先在“新增监控”里解析主页作品。</div></div>
+          </div>
         </section>
-      </aside>
+      </section>
 
-      <section class="panel inbox">
+      <section id="leadsTab" class="tab-panel active panel inbox">
         <div class="head">
           <div>
             <h2>评论线索</h2>
@@ -239,7 +251,6 @@
         </div>
         <div class="toolbar">
           <button id="reloadLeads" class="btn secondary">刷新数据</button>
-          <button id="quickLogin" class="btn secondary">检查登录</button>
           <input id="search" class="search" placeholder="搜索昵称、评论内容、IP属地">
         </div>
         <div id="leadList" class="lead-list">
@@ -251,6 +262,16 @@
         <div id="diagnosis" class="diagnosis">
           <div class="diagnosis-row"><b>快速排错</b><span class="diag-copy">正在检查登录态与最近一次采集结果…</span></div>
         </div>
+      </section>
+
+      <section id="monitorsTab" class="tab-panel">
+        <section class="panel">
+          <div class="head">
+            <h2>监控列表</h2>
+            <button id="reloadMonitors" class="btn ghost">刷新</button>
+          </div>
+          <div id="monitors" class="body monitor-list"><div class="empty">暂无监控对象</div></div>
+        </section>
       </section>
     </section>
   </main>
@@ -287,6 +308,10 @@
       clearTimeout(window.__toast);
       window.__toast=setTimeout(()=>el.className='toast',3400);
     }
+    function switchTab(id){
+      document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id));
+      document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.toggle('active',panel.id===id));
+    }
     async function api(path,options={}){
       const res=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
       const raw=await res.text();
@@ -309,15 +334,14 @@
         $('primaryAction').onclick=openLogin;
       }else{
         $('primaryAction').textContent='添加监控对象';
-        $('primaryAction').onclick=()=>$('profileUrl').focus();
+        $('primaryAction').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
       }
       $('stepLicense').classList.toggle('done',licenseReady);
       $('stepLogin').classList.toggle('done',state.loggedIn);
       $('stepMonitor').classList.toggle('done',(state.monitors||[]).length>0);
-      $('stepLicense').classList.toggle('hidden',licenseReady);
-      $('stepLogin').classList.toggle('hidden',!licenseReady||state.loggedIn);
-      $('stepMonitor').classList.toggle('hidden',!licenseReady||!state.loggedIn||(state.monitors||[]).length>0);
-      $('setupPanel').classList.toggle('hidden',licenseReady&&state.loggedIn&&(state.monitors||[]).length>0);
+      $('stepLicense').classList.toggle('current',!licenseReady);
+      $('stepLogin').classList.toggle('current',licenseReady&&!state.loggedIn);
+      $('stepMonitor').classList.toggle('current',licenseReady&&state.loggedIn&&!(state.monitors||[]).length);
       $('licenseStepText').textContent=state.licensed?'权益已生效。':(state.licenseRequired?'输入卡密后开放采集和导出。':'本地模式可直接使用。');
       $('loginStepText').textContent=state.loggedIn?'登录态可用。':'在官方窗口扫码或输入账号。';
     }
@@ -389,7 +413,6 @@
     function renderWorks(monitor,videos){
       state.pendingMonitor=monitor;
       state.pendingVideos=videos||[];
-      $('workPicker').classList.add('show');
       $('workPickerMeta').textContent=`已解析 ${state.pendingVideos.length} 条作品，勾选后再采集评论。`;
       $('workList').innerHTML=state.pendingVideos.length?state.pendingVideos.map((v,i)=>`<label class="work">
         <input type="checkbox" data-work-index="${i}" ${v.selected!==false?'checked':''}>
@@ -408,6 +431,7 @@
       setJob('正在解析作品','浏览器正在读取主页作品列表，暂不采集评论。','解析中');
       const d=await api('/api/comment-leads/profile-videos',{method:'POST',body:JSON.stringify(payload)});
       renderWorks(d.monitor,d.videos||[]);
+      switchTab('worksTab');
       setJob('请选择作品',`已读取 ${Number((d.videos||[]).length)} 条作品，确认后再开始采集评论。`,`${Number((d.videos||[]).length)} 条`);
       await Promise.all([loadMonitors(),loadDiagnosis(d.monitor&&d.monitor.id)]);
       return d;
@@ -462,7 +486,7 @@
         else if(action.dataset.diagnosisAction==='retry'){
           const first=document.querySelector('[data-resolve]');
           if(first)resolveMonitorWorks(first.dataset.resolve);
-        }else if(action.dataset.diagnosisAction==='monitor')$('profileUrl').focus();
+        }else if(action.dataset.diagnosisAction==='monitor'){switchTab('addTab');$('profileUrl').focus();}
       };
     }
     async function loadDiagnosis(id=''){
@@ -494,6 +518,7 @@
         const partial=Boolean(d.error);
         setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);
         toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成');
+        switchTab('leadsTab');
         await Promise.all([loadLeads(),loadMonitors(),loadDiagnosis(monitor.id)]);
       }catch(e){
         setJob('采集未完成',e.message,'请重试');
@@ -541,12 +566,13 @@
     $('stepLicenseBtn').onclick=()=>$('licenseModal').classList.add('show');
     $('stepLoginBtn').onclick=openLogin;
     $('quickLogin').onclick=openLogin;
-    $('focusAddBtn').onclick=()=>$('profileUrl').focus();
+    $('focusAddBtn').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
     $('reloadMonitors').onclick=loadMonitors;
     $('reloadLeads').onclick=loadLeads;
     $('collectSelectedWorks').onclick=runSelectedWorks;
     $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
     $('search').oninput=renderLeads;
+    document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
   </script>
