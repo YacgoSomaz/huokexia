@@ -94,7 +94,7 @@
     .lead-list{display:grid;max-height:640px;overflow:auto}
     .lead{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
-    .person{font-weight:900;line-height:1.35}
+    .person{font-weight:900;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .subtle{color:var(--muted);font-size:12px;line-height:1.45}
     .comment{line-height:1.55;white-space:pre-wrap}
     .tag{display:inline-flex;border-radius:999px;background:#edf4ff;color:#315fc0;padding:4px 8px;font-size:12px;font-weight:700}
@@ -458,7 +458,7 @@
         return;
       }
       $('leadList').innerHTML=header+rows.map(x=>`<article class="lead">
-        <div><div class="person">${escapeHtml(x.commenter_nickname||'抖音用户')}</div><div class="subtle">${escapeHtml(x.commenter_signature||x.commenter_unique_id||'')}</div></div>
+        <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
         <div><span class="tag">${escapeHtml(x.ai_label||x.status||'待跟进')}</span></div>
         <div>${escapeHtml(x.comment_ip_location||'未知')}</div>
