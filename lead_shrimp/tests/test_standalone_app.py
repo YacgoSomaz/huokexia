@@ -26,6 +26,15 @@ def test_license_status_is_available_before_card_activation() -> None:
     assert payload["license_required"] is False
 
 
+def test_health_endpoint_is_independent_from_license_status() -> None:
+    from lead_shrimp.app import app
+
+    response = TestClient(app).get("/api/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"ok": True, "service": "lead_shrimp"}
+
+
 def test_frontend_does_not_expose_replay_navigation() -> None:
     from lead_shrimp.app import frontend_path
 
@@ -86,6 +95,23 @@ def test_launcher_waits_for_the_health_endpoint_before_opening_browser(monkeypat
 
     assert launcher.wait_for_service_and_open(8931, timeout_sec=1, poll_sec=0) is True
     assert opened == ["http://127.0.0.1:8931/"]
+
+
+def test_launcher_health_probe_uses_the_dedicated_health_endpoint() -> None:
+    from lead_shrimp import launcher
+
+    source = __import__("inspect").getsource(launcher.service_ready)
+
+    assert "/api/health" in source
+
+
+def test_launcher_records_startup_exceptions_for_pythonw_users() -> None:
+    from lead_shrimp import launcher
+
+    source = __import__("inspect").getsource(launcher.main)
+
+    assert "traceback" in source
+    assert "_startup_error_file" in source
 
 
 def test_collection_failure_is_returned_as_json_for_the_frontend(monkeypatch) -> None:

@@ -7,8 +7,9 @@
 ### 安装启动稳定性
 
 - 启动器不再固定把浏览器打开到 `8922`：端口被占用时会自动顺延选择可用端口。
-- 启动器会等待 `/api/license/status` 返回成功后再打开前端，避免服务尚未拉起时出现 `ERR_CONNECTION_REFUSED`。
+- 启动器会等待独立 `/api/health` 返回成功后再打开前端，避免服务尚未拉起时出现 `ERR_CONNECTION_REFUSED`。
 - 服务启动超时或端口全部不可用时，会生成 `%LOCALAPPDATA%\LeadShrimp\logs\launcher.log` 和 `startup-error.html`，便于远程排错。
+- 捕获 `pythonw.exe` 下的模块导入异常和 Uvicorn 启动异常，写入完整 traceback 后打开诊断页。
 
 ### 通用版安装包
 

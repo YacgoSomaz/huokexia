@@ -119,6 +119,11 @@ def index() -> str:
     return frontend_path().read_text(encoding="utf-8")
 
 
+@app.get("/api/health")
+def api_health() -> JSONResponse:
+    return JSONResponse({"ok": True, "service": "lead_shrimp"})
+
+
 @app.get("/api/license/status")
 def api_license_status() -> JSONResponse:
     status = license_manager.public_status()

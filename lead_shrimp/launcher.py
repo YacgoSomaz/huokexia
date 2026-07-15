@@ -7,6 +7,7 @@ import socket
 import sys
 import threading
 import time
+import traceback
 import urllib.error
 import urllib.request
 import webbrowser
@@ -82,7 +83,7 @@ def _requested_port(argv: list[str], default: int = 8922) -> int:
 
 def service_ready(port: int) -> bool:
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/license/status", timeout=1.2) as response:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/health", timeout=1.2) as response:
             return response.status == 200
     except (OSError, urllib.error.URLError):
         return False
@@ -128,14 +129,24 @@ def main() -> int:
         error = _startup_error_file(root, str(exc))
         webbrowser.open(error.as_uri(), new=1)
         return 1
+    sys.argv[:] = app_argv(with_port(sys.argv, port))
+    try:
+        from lead_shrimp.app import main as app_main
+    except BaseException:
+        error = _startup_error_file(root, traceback.format_exc())
+        webbrowser.open(error.as_uri(), new=1)
+        return 1
     # A browser is the local UI shell.  It is bound to loopback only; no remote
     # page can command this local collector through CORS.
     if "--no-browser" not in sys.argv:
         threading.Thread(target=wait_for_service_and_open, args=(port,), daemon=True).start()
-    sys.argv[:] = app_argv(with_port(sys.argv, port))
-    from lead_shrimp.app import main as app_main
-
-    return app_main()
+    try:
+        return app_main()
+    except BaseException:
+        error = _startup_error_file(root, traceback.format_exc())
+        if "--no-browser" not in sys.argv:
+            webbrowser.open(error.as_uri(), new=1)
+        return 1
 
 
 if __name__ == "__main__":
