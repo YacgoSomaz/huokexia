@@ -768,7 +768,24 @@ def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: i
                 pass
 
 
-def capture_video_comments(url: str, *, max_comments: int = 500, headed: bool = True) -> CaptureResult:
+def _page_needs_verification(page: Any) -> bool:
+    """Detect an interactive security challenge without attempting to bypass it."""
+    try:
+        text = " ".join((str(page.url or ""), str(page.title() or ""), str(page.locator("body").inner_text(timeout=1000) or ""))).lower()
+    except Exception:
+        return False
+    return any(keyword in text for keyword in (
+        "captcha", "verify", "verification", "challenge", "滑块", "安全验证", "短信验证码", "请输入验证码",
+    ))
+
+
+def capture_video_comments(
+    url: str,
+    *,
+    max_comments: int = 500,
+    headed: bool = False,
+    allow_interactive_fallback: bool = True,
+) -> CaptureResult:
     """Capture public comments from one Douyin video using an authorized browser profile."""
     source_url = extract_first_url(url)
     aweme_id = extract_aweme_id(source_url)
@@ -894,6 +911,23 @@ def capture_video_comments(url: str, *, max_comments: int = 500, headed: bool = 
             pass
         page.wait_for_timeout(4500)
         _merge_metadata(metadata, _read_page_metadata(page))
+        if _page_needs_verification(page):
+            metadata["verification_required"] = True
+            if not headed and allow_interactive_fallback:
+                context.close()
+                return capture_video_comments(
+                    url,
+                    max_comments=max_comments,
+                    headed=True,
+                    allow_interactive_fallback=False,
+                )
+            if headed:
+                deadline = time.time() + 180
+                while time.time() < deadline and _page_needs_verification(page):
+                    page.wait_for_timeout(1000)
+                if _page_needs_verification(page):
+                    context.close()
+                    return CaptureResult(False, rows, metadata, "验证页面未完成，请完成验证后重试")
         metadata["authenticated"] = _has_auth_cookie(context)
         if not metadata["authenticated"]:
             _save_login_state(False, browser)
