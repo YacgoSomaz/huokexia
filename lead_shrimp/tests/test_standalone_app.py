@@ -46,6 +46,48 @@ def test_launcher_removes_its_browser_only_flag_before_starting_api() -> None:
     ]
 
 
+def test_launcher_rewrites_the_requested_port_for_the_selected_free_port() -> None:
+    from lead_shrimp.launcher import with_port
+
+    assert with_port(["LeadShrimpLauncher.exe", "--port", "8922"], 8931) == [
+        "LeadShrimpLauncher.exe",
+        "--port",
+        "8931",
+    ]
+    assert with_port(["LeadShrimpLauncher.exe"], 8931) == [
+        "LeadShrimpLauncher.exe",
+        "--port",
+        "8931",
+    ]
+
+
+def test_launcher_falls_back_when_the_preferred_port_is_busy(monkeypatch) -> None:
+    from lead_shrimp import launcher
+
+    attempts: list[int] = []
+
+    def fake_bind(port: int) -> bool:
+        attempts.append(port)
+        return port != 8922
+
+    monkeypatch.setattr(launcher, "_port_is_free", fake_bind)
+
+    assert launcher.choose_port(8922, attempts=3) == 8923
+    assert attempts == [8922, 8923]
+
+
+def test_launcher_waits_for_the_health_endpoint_before_opening_browser(monkeypatch) -> None:
+    from lead_shrimp import launcher
+
+    opened: list[str] = []
+    monkeypatch.setattr(launcher.webbrowser, "open", lambda url, new=0: opened.append(url) or True)
+    responses = iter([False, True])
+    monkeypatch.setattr(launcher, "service_ready", lambda _port: next(responses))
+
+    assert launcher.wait_for_service_and_open(8931, timeout_sec=1, poll_sec=0) is True
+    assert opened == ["http://127.0.0.1:8931/"]
+
+
 def test_collection_failure_is_returned_as_json_for_the_frontend(monkeypatch) -> None:
     from lead_shrimp import app as app_module
 

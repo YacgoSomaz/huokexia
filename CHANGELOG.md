@@ -4,6 +4,12 @@
 
 ## 2026-07-15
 
+### 安装启动稳定性
+
+- 启动器不再固定把浏览器打开到 `8922`：端口被占用时会自动顺延选择可用端口。
+- 启动器会等待 `/api/license/status` 返回成功后再打开前端，避免服务尚未拉起时出现 `ERR_CONNECTION_REFUSED`。
+- 服务启动超时或端口全部不可用时，会生成 `%LOCALAPPDATA%\LeadShrimp\logs\launcher.log` 和 `startup-error.html`，便于远程排错。
+
 ### 通用版安装包
 
 - 新增 `build_public_release.ps1`：复制 Python 运行时、安装依赖、执行安全扫描并调用 Inno Setup。
