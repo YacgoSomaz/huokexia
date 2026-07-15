@@ -78,6 +78,7 @@
     .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
     .monitor-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;max-height:620px;overflow:auto}
     .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:12px;display:grid;gap:11px}
+    .monitor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .monitor-identity{display:flex;align-items:center;gap:10px;min-width:0}
     .monitor-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#eaf1ff;color:var(--brand);display:grid;place-items:center;font-weight:900;flex:0 0 auto}
     .monitor-copy{min-width:0;display:grid;gap:6px}
@@ -280,6 +281,16 @@
         <div class="toolbar">
           <button id="reloadLeads" class="btn secondary">刷新数据</button>
           <input id="search" class="search" placeholder="搜索昵称、评论内容、IP属地">
+          <select id="leadAgeFilter" class="search" aria-label="评论时间范围">
+            <option value="0">全部时间</option>
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="90">近 90 天</option>
+          </select>
+          <select id="leadSort" class="search" aria-label="评论排序">
+            <option value="newest">最新评论在前</option>
+            <option value="oldest">最早评论在前</option>
+          </select>
         </div>
         <div id="leadList" class="lead-list">
           <div class="lead header">
@@ -411,10 +422,14 @@
             ${avatar?`<img class="monitor-avatar" src="${avatar}" alt="">`:'<span class="monitor-avatar" aria-hidden="true">获</span>'}
             <div class="monitor-copy"><strong title="${title}">${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
           </div>
-          <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
+          <div class="monitor-actions">
+            <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
+            <button class="btn ghost" data-refresh="${escapeHtml(m.id)}">刷新作品</button>
+          </div>
         </article>`;
       }).join(''):'<div class="empty">暂无监控对象。粘贴一个抖音主页或视频链接即可开始。</div>';
       document.querySelectorAll('[data-resolve]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.resolve));
+      document.querySelectorAll('[data-refresh]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.refresh,true));
       updatePrimaryAction();
     }
     async function loadMonitors(){
@@ -505,12 +520,14 @@
         setWorkLoading(false);
       }
     }
-    async function resolveMonitorWorks(id){
+    async function resolveMonitorWorks(id,force=false){
       const monitor=(state.monitors||[]).find(x=>String(x.id)===String(id));
       if(!monitor)return;
       try{
-        await resolveWorks({url:monitor.target_url||monitor.raw_url,title:monitor.title||'',max_videos:Number(monitor.max_videos||5),max_comments:Number(monitor.max_comments||100)});
-        toast('作品列表已解析，请选择要采集的作品');
+        const payload={url:monitor.target_url||monitor.raw_url,title:monitor.title||'',max_videos:Number(monitor.max_videos||5),max_comments:Number(monitor.max_comments||100)};
+        if(force)payload.force=true;
+        await resolveWorks(payload);
+        toast(force?'作品已刷新，请选择要采集的作品':'已载入缓存作品，请选择要采集的作品');
       }catch(e){
         setJob('解析失败',e.message,'请重试');
         toast(e.message,true);
@@ -518,7 +535,20 @@
     }
     function renderLeads(){
       const term=$('search').value.trim().toLowerCase();
-      const rows=allLeads.filter(x=>!term||[x.commenter_nickname,x.content,x.comment_ip_location,x.ai_label,x.status].join(' ').toLowerCase().includes(term));
+      const days=Number($('leadAgeFilter').value||0);
+      const cutoff=days?Date.now()-days*86400000:0;
+      const sort=$('leadSort').value||'newest';
+      const rows=allLeads.filter(x=>{
+        const matchesTerm=!term||[x.commenter_nickname,x.content,x.comment_ip_location,x.ai_label,x.status].join(' ').toLowerCase().includes(term);
+        const stamp=videoTimestamp(x.create_time);
+        return matchesTerm&&(!days||(stamp>0&&stamp>=cutoff));
+      }).sort((a,b)=>{
+        const av=videoTimestamp(a.create_time),bv=videoTimestamp(b.create_time);
+        if(!av&&!bv)return 0;
+        if(!av)return 1;
+        if(!bv)return -1;
+        return sort==='oldest'?av-bv:bv-av;
+      });
       $('leadCount').textContent=allLeads.length;
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
       const header='<div class="lead header"><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
@@ -646,6 +676,8 @@
     $('includePinnedWorks').onchange=renderWorkList;
     $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
     $('search').oninput=renderLeads;
+    $('leadAgeFilter').onchange=renderLeads;
+    $('leadSort').onchange=renderLeads;
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);

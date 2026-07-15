@@ -253,7 +253,7 @@ def test_frontend_has_lead_time_filters_and_cached_work_refresh() -> None:
     assert 'id="leadAgeFilter"' in page
     assert 'id="leadSort"' in page
     assert 'data-refresh="' in page
-    assert "force:true" in page
+    assert "payload.force=true" in page
 
 
 def test_monitor_list_is_a_compact_avatar_grid() -> None:

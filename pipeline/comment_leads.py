@@ -309,6 +309,24 @@ def normalize_comment(
     }
 
 
+def filter_author_comments(
+    rows: list[dict[str, Any]],
+    *,
+    author_sec_uid: str = "",
+    author_name: str = "",
+) -> list[dict[str, Any]]:
+    """Remove comments posted by the monitored video's author."""
+    sec_uid = str(author_sec_uid or "").strip()
+    nickname = str(author_name or "").strip()
+    if not sec_uid and not nickname:
+        return list(rows)
+    return [
+        row for row in rows
+        if str(row.get("commenter_sec_uid") or "").strip() != sec_uid
+        and (not nickname or str(row.get("commenter_nickname") or "").strip() != nickname)
+    ]
+
+
 def normalize_comment_tree(
     raw: dict[str, Any],
     *,
@@ -994,6 +1012,10 @@ def _update_monitor_after_run(
             monitor["last_reported_total"] = int(metadata.get("reported_total") or 0)
         except (TypeError, ValueError):
             monitor["last_reported_total"] = 0
+    if isinstance(metadata.get("cached_videos"), list):
+        monitor["cached_videos"] = [
+            dict(video) for video in metadata["cached_videos"] if isinstance(video, dict)
+        ]
     _merge_metadata(monitor, metadata)
     if monitor.get("author_name"):
         monitor["title"] = monitor["author_name"]
@@ -1010,10 +1032,18 @@ def _profile_monitor_metadata(profile: dict[str, Any], videos: list[dict[str, An
         "author_profile_url": f"https://www.douyin.com/user/{sec_uid}" if sec_uid else "",
         "video_title": f"最近 {len(videos)} 条作品评论监控" if videos else "",
         "discovered_video_count": len(videos),
+        "cached_videos": [dict(video) for video in videos if isinstance(video, dict)],
     }
 
 
-def resolve_profile_works(url: str, *, owner: str = "", max_comments: int = 100, max_videos: int = 5) -> dict[str, Any]:
+def resolve_profile_works(
+    url: str,
+    *,
+    owner: str = "",
+    max_comments: int = 100,
+    max_videos: int = 5,
+    force: bool = False,
+) -> dict[str, Any]:
     """Resolve a monitored homepage into visible works without collecting comments."""
     monitor = add_monitor(url, owner=owner, max_comments=max_comments, max_videos=max_videos)
     if monitor.get("target_type") != "profile":
@@ -1032,12 +1062,32 @@ def resolve_profile_works(url: str, *, owner: str = "", max_comments: int = 100,
             "warning": "",
         }
     recent_count = max(1, min(int(max_videos or 5), 50))
+    cached_videos = [video for video in (monitor.get("cached_videos") or []) if isinstance(video, dict)]
+    if not force and len(cached_videos) >= recent_count:
+        profile = {
+            "sec_user_id": str(monitor.get("author_sec_uid") or ""),
+            "nickname": str(monitor.get("author_name") or monitor.get("title") or ""),
+            "avatar_url": str(monitor.get("author_avatar") or ""),
+        }
+        return {
+            "ok": True,
+            "monitor": monitor,
+            "profile": profile,
+            "videos": cached_videos[:recent_count],
+            "warning": "已使用本地作品缓存；点击刷新作品可重新解析。",
+        }
     resolved = short_video.resolve_profile(str(monitor.get("target_url") or monitor.get("raw_url") or ""), recent_count=recent_count)
     profile = resolved.get("profile") if isinstance(resolved.get("profile"), dict) else {}
     videos = [v for v in (resolved.get("videos") or []) if isinstance(v, dict)]
     metadata = _profile_monitor_metadata(profile, videos)
     store = load_store()
-    _update_monitor_after_run(store, str(monitor.get("id") or ""), last_count=int(monitor.get("last_count") or 0), error="", metadata=metadata)
+    _update_monitor_after_run(
+        store,
+        str(monitor.get("id") or ""),
+        last_count=int(monitor.get("last_count") or 0),
+        error="",
+        metadata={**metadata, "cached_videos": videos},
+    )
     save_store(store)
     monitor = next((m for m in load_store().get("monitors", []) if m.get("id") == monitor.get("id")), monitor)
     return {
@@ -1093,14 +1143,19 @@ def run_selected_videos(
     }
     for video in clean_videos:
         result = capture_video_comments(str(video.get("url") or ""), max_comments=per_video_limit)
-        total_captured += len(result.rows)
+        clean_rows = filter_author_comments(
+            result.rows,
+            author_sec_uid=str(monitor.get("author_sec_uid") or ""),
+            author_name=str(monitor.get("author_name") or ""),
+        )
+        total_captured += len(clean_rows)
         try:
             reported_total += int(result.metadata.get("reported_total") or 0)
         except (TypeError, ValueError):
             pass
         _merge_metadata(metadata, result.metadata)
-        if result.rows:
-            inserted = ingest_rows(result.rows, monitor_id=monitor_id)
+        if clean_rows:
+            inserted = ingest_rows(clean_rows, monitor_id=monitor_id)
             total_inserted += int(inserted.get("inserted") or 0)
         elif result.error:
             errors.append(f"{video.get('title') or video.get('id') or '作品'}：{result.error}")
@@ -1170,10 +1225,15 @@ def run_monitor(monitor_id: str) -> dict[str, Any]:
             if not video_url:
                 continue
             result = capture_video_comments(video_url, max_comments=max_comments)
-            total_captured += len(result.rows)
+            clean_rows = filter_author_comments(
+                result.rows,
+                author_sec_uid=str(monitor.get("author_sec_uid") or ""),
+                author_name=str(monitor.get("author_name") or ""),
+            )
+            total_captured += len(clean_rows)
             _merge_metadata(metadata, result.metadata)
-            if result.rows:
-                inserted = ingest_rows(result.rows, monitor_id=monitor_id)
+            if clean_rows:
+                inserted = ingest_rows(clean_rows, monitor_id=monitor_id)
                 total_inserted += int(inserted.get("inserted") or 0)
                 store = load_store()
             elif result.error:

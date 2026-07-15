@@ -232,6 +232,7 @@ def api_comment_leads_add_monitor(payload: dict[str, object] = Body(...)) -> JSO
             owner=str(payload.get("owner") or ""),
             max_comments=_bounded_int(payload.get("max_comments"), default=100, minimum=1, maximum=2000),
             max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
+            force=bool(payload.get("force")),
         )
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
