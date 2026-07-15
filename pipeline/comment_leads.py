@@ -37,6 +37,7 @@ AUTH_COOKIE_NAMES = {
     "passport_auth_status",
     "passport_auth_status_ss",
 }
+LOGIN_STATE_TTL_SEC = 3 * 24 * 3600
 FIELDNAMES = [
     "aweme_id",
     "comment_id",
@@ -524,15 +525,23 @@ def _reply_parent_from_response_url(url: str) -> str:
         return ""
 
 
-def _has_auth_cookie(context: Any) -> bool:
+def _context_cookie_jar(context: Any) -> dict[str, str]:
     try:
-        jar = {
+        return {
             str(cookie.get("name") or ""): str(cookie.get("value") or "")
             for cookie in context.cookies("https://www.douyin.com")
         }
     except Exception:
+        return {}
+
+
+def _has_auth_cookie(context: Any) -> bool:
+    jar = _context_cookie_jar(context)
+    if not short_video._has_douyin_login_cookie(jar):
         return False
-    return short_video._has_douyin_login_cookie(jar) and browser_cookies.shared_status().get("has_login") is True
+    browser_cookies.store_shared_jar(jar)
+    browser_cookies.mark_login_verified(jar)
+    return True
 
 
 def _load_login_state() -> dict[str, Any]:
@@ -541,15 +550,34 @@ def _load_login_state() -> dict[str, Any]:
 
 
 def _save_login_state(authenticated: bool, browser: str) -> None:
+    now = _now()
     _save_json(
         config.COMMENT_LEADS_LOGIN_STATE_JSON,
         {
             "authenticated": bool(authenticated),
             "browser": str(browser or ""),
             "verification_version": 2,
-            "updated_at": _now(),
+            "updated_at": now,
+            "expires_at": now + LOGIN_STATE_TTL_SEC if authenticated else now,
         },
     )
+
+
+def _login_state_valid(state: dict[str, Any], *, now: int | None = None) -> bool:
+    if not bool(state.get("authenticated")):
+        return False
+    current = _now() if now is None else int(now)
+    try:
+        expires_at = int(state.get("expires_at") or 0)
+    except (TypeError, ValueError):
+        expires_at = 0
+    if expires_at:
+        return current < expires_at
+    try:
+        updated_at = int(state.get("updated_at") or 0)
+    except (TypeError, ValueError):
+        return False
+    return bool(updated_at) and current - updated_at < LOGIN_STATE_TTL_SEC
 
 
 def _launch_comment_context(playwright: Any, profile: Path, *, headless: bool) -> tuple[Any, str]:
@@ -630,20 +658,84 @@ def login_status() -> dict[str, Any]:
     profile_dir = config.COMMENT_LEADS_PROFILE_DIR
     has_profile = profile_dir.exists() and any(profile_dir.iterdir())
     shared = browser_cookies.shared_status()
+    state = _load_login_state()
+    persisted_login = has_profile and _login_state_valid(state)
+    logged_in = bool(shared.get("has_login")) or persisted_login
     return {
         "profile_dir": str(profile_dir),
         "has_profile": bool(has_profile),
-        "logged_in": bool(shared.get("has_login")),
-        "browser": str(shared.get("browser") or "msedge"),
+        "logged_in": bool(logged_in),
+        "browser": str(state.get("browser") or shared.get("browser") or "msedge"),
         "cookie_count": int(shared.get("cookie_count") or 0),
+        "expires_at": int(state.get("expires_at") or 0),
     }
 
 
 def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: int = 30000) -> dict[str, Any]:
-    result = short_video.remint_short_video_cookie(
-        start_url or "https://www.douyin.com/", timeout_sec=max(30, min(wait_ms // 1000, 180))
-    )
-    return {"ok": bool(result.get("ok")) and bool(result.get("has_login")), "message": result.get("message") or "抖音授权完成"}
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "message": f"Playwright 未安装：{exc}"}
+
+    target = short_video.normalize_url(start_url or "https://www.douyin.com/")
+    if "douyin.com" not in target:
+        target = "https://www.douyin.com/"
+    profile = config.COMMENT_LEADS_PROFILE_DIR
+    profile.mkdir(parents=True, exist_ok=True)
+    timeout_sec = max(30, min(wait_ms // 1000, 180))
+
+    with sync_playwright() as p:
+        try:
+            context, browser = _launch_comment_context(p, profile, headless=False)
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "message": f"无法打开 Edge 或 Chromium 浏览器：{exc}"}
+        try:
+            shared_jar = browser_cookies.cached_jar()
+            if shared_jar:
+                context.add_cookies([
+                    {"name": k, "value": v, "domain": ".douyin.com", "path": "/"}
+                    for k, v in shared_jar.items()
+                ])
+            page = context.new_page()
+            try:
+                page.goto(target, wait_until="domcontentloaded", timeout=30000)
+            except Exception:  # noqa: BLE001
+                pass
+            deadline = time.time() + timeout_sec
+            jar: dict[str, str] = {}
+            has_login = False
+            while time.time() < deadline:
+                page.wait_for_timeout(1000)
+                jar = _context_cookie_jar(context)
+                has_login = short_video._has_douyin_login_cookie(jar)
+                if has_login:
+                    break
+            if not jar.get("ttwid"):
+                _save_login_state(False, browser)
+                return {"ok": False, "message": "没有取得抖音 Cookie，请在弹出的窗口完成登录后重试。"}
+            browser_cookies.store_shared_jar(jar)
+            if has_login:
+                browser_cookies.mark_login_verified(jar)
+                _save_login_state(True, browser)
+                return {
+                    "ok": True,
+                    "has_login": True,
+                    "cookie_count": len(jar),
+                    "expires_at": _load_login_state().get("expires_at", 0),
+                    "message": "抖音登录态已保存，3 天内刷新页面不会丢失登录状态。",
+                }
+            _save_login_state(False, browser)
+            return {
+                "ok": False,
+                "has_login": False,
+                "cookie_count": len(jar),
+                "message": "已保存基础 Cookie；请在弹窗内完成抖音账号登录后重试。",
+            }
+        finally:
+            try:
+                context.close()
+            except Exception:  # noqa: BLE001
+                pass
 
 
 def capture_video_comments(url: str, *, max_comments: int = 100, headed: bool = True) -> CaptureResult:

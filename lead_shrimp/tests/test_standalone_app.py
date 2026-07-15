@@ -79,6 +79,44 @@ def test_collection_diagnosis_turns_missing_login_into_a_next_step(monkeypatch) 
     assert response.json()["captured"] == 20
 
 
+def test_comment_login_state_survives_page_refresh(monkeypatch, tmp_path) -> None:
+    from lead_shrimp import app as app_module
+
+    profile = tmp_path / "comment_profile"
+    profile.mkdir()
+    (profile / "Default").mkdir()
+    state_path = tmp_path / "comment_login_state.json"
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_PROFILE_DIR", profile)
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_LOGIN_STATE_JSON", state_path)
+    monkeypatch.setattr(app_module.comment_leads.browser_cookies, "shared_status", lambda: {"has_login": False, "cookie_count": 0, "browser": "msedge"})
+
+    app_module.comment_leads._save_login_state(True, "msedge")
+    first = TestClient(app_module.app).get("/api/comment-leads/status").json()
+    second = TestClient(app_module.app).get("/api/comment-leads/status").json()
+
+    assert first["logged_in"] is True
+    assert second["logged_in"] is True
+    assert first["expires_at"] > first.get("cookie_count", 0)
+
+
+def test_expired_comment_login_state_requires_relogin(monkeypatch, tmp_path) -> None:
+    from lead_shrimp import app as app_module
+
+    profile = tmp_path / "comment_profile"
+    profile.mkdir()
+    (profile / "Default").mkdir()
+    state_path = tmp_path / "comment_login_state.json"
+    state_path.write_text('{"authenticated": true, "browser": "msedge", "updated_at": 1, "expires_at": 2}', encoding="utf-8")
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_PROFILE_DIR", profile)
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_LOGIN_STATE_JSON", state_path)
+    monkeypatch.setattr(app_module.comment_leads.browser_cookies, "shared_status", lambda: {"has_login": False, "cookie_count": 0, "browser": "msedge"})
+
+    response = TestClient(app_module.app).get("/api/comment-leads/status")
+
+    assert response.status_code == 200
+    assert response.json()["logged_in"] is False
+
+
 def test_frontend_has_a_fast_diagnosis_area() -> None:
     from lead_shrimp.app import frontend_path
 
