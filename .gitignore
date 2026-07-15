@@ -1,0 +1,37 @@
+# Python and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local runtime data and generated releases
+data/
+license_data/
+staging/
+release/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.exe
+nuitka-crash-report.xml
+
+# Secrets, certificates and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cer
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

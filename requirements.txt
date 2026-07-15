@@ -1,0 +1,9 @@
+# Desktop/local API application
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+requests>=2.32,<3
+cryptography>=43,<47
+imageio-ffmpeg>=0.5,<1
+
+# Browser automation used for the user's own Douyin login/profile session
+playwright>=1.48,<2
