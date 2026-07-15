@@ -176,6 +176,14 @@ def test_profile_fallback_enriches_video_ids_from_detail_endpoint() -> None:
     assert "aweme_id" in source
 
 
+def test_incomplete_profile_cache_does_not_short_circuit_metadata_refresh() -> None:
+    from pipeline import short_video
+
+    source = __import__("inspect").getsource(short_video.resolve_profile)
+
+    assert "_profile_video_has_metadata" in source
+
+
 def test_work_picker_shows_pinned_works_and_marks_them_without_selecting() -> None:
     from lead_shrimp.app import frontend_path
 
