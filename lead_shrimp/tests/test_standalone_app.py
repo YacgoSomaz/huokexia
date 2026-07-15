@@ -146,3 +146,22 @@ def test_frontend_uses_a_compact_workbench_and_visible_controls() -> None:
     assert ".tabs{width:184px" in page
     assert ".tab-btn{border:1px solid #d8e2ef;background:#fff" in page
     assert ".tab-btn.active{background:var(--brand)" in page
+
+
+def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="workAgeFilter"' in page
+    assert 'id="includePinnedWorks"' in page
+    assert "const DEFAULT_WORK_WINDOW_DAYS=30;" in page
+    assert "v.selected===true?'checked':''" in page
+
+
+def test_profile_render_waits_for_api_metadata_before_dom_fallback() -> None:
+    from pipeline.short_video import _render_profile_events_locked
+
+    source = __import__("inspect").getsource(_render_profile_events_locked)
+
+    assert "tick >= 14" in source
