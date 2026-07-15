@@ -165,3 +165,21 @@ def test_profile_render_waits_for_api_metadata_before_dom_fallback() -> None:
     source = __import__("inspect").getsource(_render_profile_events_locked)
 
     assert "tick >= 14" in source
+
+
+def test_work_picker_shows_pinned_works_and_marks_them_without_selecting() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert '<option value="0" selected>全部作品</option>' in page
+    assert "$('includePinnedWorks').checked=true;" in page
+    assert "${v.pinned?'<span class=\"chip warn\">置顶</span>':''}" in page
+
+
+def test_profile_metadata_retries_captured_post_endpoint() -> None:
+    from pipeline.short_video import _render_profile_events_locked
+
+    source = __import__("inspect").getsource(_render_profile_events_locked)
+
+    assert "metadata_retry" in source
