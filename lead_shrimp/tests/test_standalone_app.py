@@ -183,3 +183,4 @@ def test_profile_metadata_retries_captured_post_endpoint() -> None:
     source = __import__("inspect").getsource(_render_profile_events_locked)
 
     assert "metadata_retry" in source
+    assert "dom_fallback_videos" in source
