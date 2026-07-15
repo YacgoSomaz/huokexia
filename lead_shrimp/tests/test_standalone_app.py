@@ -222,6 +222,40 @@ def test_profile_api_requests_have_a_per_run_budget() -> None:
     assert "post_api_urls[-2:]" in source
 
 
+def test_author_comments_are_removed_before_lead_ingestion() -> None:
+    from pipeline.comment_leads import filter_author_comments
+
+    rows = [
+        {"comment_id": "author", "commenter_sec_uid": "sec-author", "content": "作者评论"},
+        {"comment_id": "visitor", "commenter_sec_uid": "sec-visitor", "content": "用户评论"},
+    ]
+
+    filtered = filter_author_comments(rows, author_sec_uid="sec-author")
+
+    assert [row["comment_id"] for row in filtered] == ["visitor"]
+
+
+def test_profile_work_cache_is_used_before_browser_resolution() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads.resolve_profile_works)
+
+    assert "cached_videos" in source
+    assert "force" in source
+    assert "已使用本地作品缓存" in source
+
+
+def test_frontend_has_lead_time_filters_and_cached_work_refresh() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="leadAgeFilter"' in page
+    assert 'id="leadSort"' in page
+    assert 'data-refresh="' in page
+    assert "force:true" in page
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
