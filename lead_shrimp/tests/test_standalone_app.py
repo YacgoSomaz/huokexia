@@ -325,6 +325,16 @@ def test_cached_works_restore_after_refresh_and_warn_after_one_day() -> None:
     assert "cached_videos" in page
 
 
+def test_comment_capture_is_headless_until_verification_is_detected() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads.capture_video_comments)
+
+    assert "headed: bool = False" in source
+    assert "_page_needs_verification" in source
+    assert "allow_interactive_fallback" in source
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
