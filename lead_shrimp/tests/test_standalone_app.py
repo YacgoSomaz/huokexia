@@ -330,9 +330,20 @@ def test_comment_capture_is_headless_until_verification_is_detected() -> None:
 
     source = __import__("inspect").getsource(comment_leads.capture_video_comments)
 
-    assert "headed: bool = False" in source
+    assert "headed: bool = True" in source
+    assert "background: bool = True" in source
     assert "_page_needs_verification" in source
     assert "allow_interactive_fallback" in source
+
+
+def test_background_capture_does_not_change_login_window_launch() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads._launch_comment_context)
+
+    assert "background" in source
+    assert "--start-minimized" in source
+    assert "--window-position=-32000,-32000" in source
 
 
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
