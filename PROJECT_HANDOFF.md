@@ -1,132 +1,128 @@
-# 获客虾（Alhook）项目交接报告
+# 获客虾项目交接报告
 
 更新时间：2026-07-15
-项目仓库：`YacgoSomaz/AIhook`（私有）
-产品名：获客虾 / LeadShrimp
-主分支：`main`
+仓库：`YacgoSomaz/AIhook`
+分支：`main`
+当前最新提交：`7c6e49b build: add portable Inno public installer`
 
-## 1. 项目目标与边界
+## 1. 先看结论
 
-获客虾是面向抖音评论线索采集的独立产品。它通过用户在本机 Edge 中完成的抖音登录态访问公开页面，采集主页作品或指定视频下的评论，供筛选、跟进和 CSV 导出使用。
+当前主线目标是**通用版本地 Web 应用**：任何 Windows 用户安装后即可使用，不加密、不启用账号系统、不要求远端授权。最新安装器由 Inno Setup 生成，内置 Python 运行时和依赖，入口是 `pythonw.exe -m lead_shrimp.launcher`。
 
-本仓库有意不包含直播复盘、直播监听、录屏、音视频流、AI 复盘、短视频 AI 工作台等功能。不要为了“复用”把这些 UI 或服务重新并入获客虾。
+商业授权代码仍在仓库中，但属于未来商业版路径；不要因为看到 `licensing_server/` 或 `LICENSE_ENFORCE` 就给通用版加激活弹窗。
 
-合规边界：仅处理用户有权访问的数据；遵守平台规则、当地法律和用户授权。不要规避验证码、风控或访问控制。出现登录失效或平台限制时，应提示用户重新登录或稍后重试，而不是绕过限制。
+当前已验证：
 
-## 2. 当前交付状态
+- `38 passed`：产品、服务端和构建契约测试。
+- 通用版 staging 安全扫描通过。
+- 内置运行时可以导入 `fastapi`、`playwright` 和 `lead_shrimp.app`。
+- `release/LeadShrimpSetup_0.1.0.exe` 已在本机生成，约 62 MB。
 
-### 已完成
+仍需真实抖音账号验收：不同账号、不同作品的评论分页完整度、发布时间字段稳定性和验证页面恢复流程。没有真实验收数据时，不要宣称“抓全了”。
 
-- 独立 FastAPI 本地应用、独立前端和独立启动入口，默认端口 `8922`。
-- 独立数据目录：`%LOCALAPPDATA%\LeadShrimp\data`。
-- 评论主页/视频采集、线索列表、搜索/筛选、CSV 导出。
-- 评论按 `comment_id` 去重。目的仅是避免同一条评论重复出现；不同评论的话术内容必须保留，不能做“同文案去重”。
-- 登录诊断接口：`GET /api/comment-leads/diagnosis`。前端将“请求返回格式异常”等笼统错误转换为明确的下一步，例如“需要完成抖音登录”。
-- 共享模块已被精简为获客必需的浏览器会话、评论采集、作品解析、授权、UI 安全规则和少量导出依赖；没有复制整套直播应用。
-- 卡密产品码 `lead_shrimp` 已接入授权服务模板；商业构建只写入公钥和 HTTPS 服务地址。
-- 商业构建脚本：Nuitka 编译 + allowlist + 安全扫描 + Inno Setup。
+## 2. 产品边界
 
-### 尚未作为正式发布结论的事项
+产品只处理用户有权访问的公开页面和用户自己完成登录后的会话。不得绕过验证码、风控、登录限制或访问控制；遇到验证应停下来提示用户操作。产品不会自动私信、关注、发布内容，也不会主动寻找非公开手机号等隐私信息。
 
-- 当前优先级是用真实的已登录账号完成“作品数量/评论完整度”验收。不要在未验收前宣称采集已覆盖某个视频全部评论。
-- 商业安装包应在核心采集通过真实验收后再构建、签名、安装和升级测试；此前被中止的构建不应发布。
-- 自动更新接口、签名更新清单和 OSS 发布后台不在本仓库内。仅上传 EXE 到 OSS 不会触发更新。
-
-## 3. 架构与模块地图
-
-| 位置 | 责任 | 注意事项 |
-| --- | --- | --- |
-| `lead_shrimp/app.py` | FastAPI 路由、许可证中间件、诊断 API | 本地地址仅限 `127.0.0.1` 使用 |
-| `lead_shrimp/frontend.html` | 单页前端、登录/采集/筛选/导出交互 | 用户可见报错要转成可执行提示 |
-| `lead_shrimp/launcher.py` | 端口检查、单实例启动、打开浏览器 | 不要改成直接运行 app 而绕过启动器 |
-| `lead_shrimp/start_lead_shrimp.bat` | 开发启动脚本、日志落盘 | 独立仓库的 `PYTHONPATH` 只需项目根目录 |
-| `pipeline/comment_leads.py` | 作品/评论采集、稳定 ID 去重、数据写入 | 采集线程不要堵塞 FastAPI 事件循环 |
-| `pipeline/browser_cookies.py` | 可信本机浏览器会话与 Cookie | 登录账号仅作信任 Cookie，非采集对象 |
-| `pipeline/short_video.py` | 主页/视频地址解析和浏览器请求辅助 | 名称遗留自旧项目；保留是为评论采集依赖 |
-| `pipeline/license_*.py` | 卡密授权、设备绑定、可信时间和签名校验 | 客户端只能持有公钥 |
-| `pipeline/web_security.py` | localhost 前端 Origin 规则 | 不要放宽为任意跨域来源 |
-| `licensing_server/` | 卡密、设备绑定、冻结、签名授权、管理台模板 | 仅服务器部署；`.env` 永不提交 |
-| `lead_shrimp/build/` | Nuitka/ISCC 商业构建 | 首次构建慢，先确认功能再打包 |
-
-## 4. 关键运行流
+主流程：
 
 ```text
-用户启动 launcher
-  -> 127.0.0.1:8922 本地 FastAPI
-  -> 用户在独立 Edge 会话完成抖音登录
-  -> 评论采集器访问目标主页/视频
-  -> 以 comment_id 写入本地数据并保留不同话术
-  -> 前端筛选、展示与 CSV 导出
-
-商业包额外流程：
-客户端卡密激活 -> 授权服务核验/设备绑定
-  -> 服务端 Ed25519 签名授权包 -> 客户端公钥验签
+启动本地 launcher
+  -> 127.0.0.1:8922 FastAPI
+  -> 登录窗口完成抖音登录并保存会话
+  -> 添加主页/视频监控对象
+  -> 解析作品元数据（发布时间、点赞、评论、置顶）
+  -> 人工选择作品和评论数量
+  -> 采集评论、过滤作者、按 comment_id 去重
+  -> 筛选高价值线索、导出选中 CSV
 ```
 
-## 5. 授权与安全规范
+## 3. 文件职责与定位入口
 
-- 固定产品码：`lead_shrimp`。
-- 所需权益：基础 `basic`；采集 `lead_radar`；导出 `export`。
-- 商业授权服务只接受该产品码对应的卡密；其他产品卡密不可解锁获客虾。
-- 私钥只存在服务端环境变量。客户端与仓库可出现 Ed25519 **公钥**，不能出现私钥。
-- `licensing_server/.env.example` 只是变量名示例；生产 `.env`、卡密数据库、管理员令牌、SSH 凭据、OSS AccessKey、签名证书都必须留在服务器或安全密码库。
-- 不要用“前端字段加密”代替权限控制。服务端签发签名授权包才是最终可信来源；客户端本地校验仅用于提高篡改成本。
-- 本地授权缓存由 Windows DPAPI（不可用时设备派生 AES-GCM）保护。离线宽限意味着被服务端冻结的离线设备不能即时失效，这是设计权衡。
+| 文件 | 负责什么 | 出问题先看哪里 |
+| --- | --- | --- |
+| `lead_shrimp/app.py` | FastAPI 路由、后台线程、前端可见错误 | 对照 API 路由和 `_run_blocking`，不要在事件循环中直接跑 Playwright |
+| `lead_shrimp/launcher.py` | 端口、单实例、本地浏览器启动 | 检查端口占用、工作目录、`LEADSHRIMP_ASSET_DIR` |
+| `lead_shrimp/frontend.html` | Tab、作品选择、评论筛选、拖动选择、导出 | 先查状态对象、API 请求和 `render*` 函数 |
+| `pipeline/comment_leads.py` | 评论采集、登录状态、评论落盘、作者过滤 | 采集失败看 `capture_video_comments`、响应监听和 `_page_needs_verification` |
+| `pipeline/short_video.py` | 主页解析、作品元数据、主页缓存 | 作品少/日期缺失看 `_render_profile_events_locked`、`_videos_from_aweme_list`、`_enrich_profile_videos` |
+| `pipeline/browser_cookies.py` | Cookie 持久化和会话复用 | 看 `shared_status`、`store_shared_jar`、`auto_refresh` |
+| `pipeline/config.py` | `%LOCALAPPDATA%\LeadShrimp\data` 路径 | 先确认数据目录，不要误读旧项目目录 |
+| `pipeline/export.py` | 历史导出能力 | 评论 CSV 主入口在 `comment_leads.export_leads_csv` |
+| `lead_shrimp/build/build_public_release.ps1` | 通用 staging 和 Inno 调用 | 先用 `-SkipInstaller`，再检查扫描结果 |
+| `lead_shrimp/build/lead_shrimp_public.iss` | 通用安装器文件、快捷方式、卸载保留策略 | 检查 `{app}\python\pythonw.exe` 和 `-m lead_shrimp.launcher` |
+| `packaging/build/check_release.py` | 发布目录安全扫描 | Python 运行时目录是供应商内容，业务源码仍必须扫描 |
+| `licensing_server/` | 未来商业版服务端 | 通用版不要依赖它 |
 
-## 6. 本地开发与验证
+## 4. API 清单
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/` | 返回前端 |
+| `GET` | `/api/license/status` | 授权状态；通用版应保持可用，不代表必须激活 |
+| `POST` | `/api/comment-leads/login` | 打开抖音登录窗口并更新状态 |
+| `GET` | `/api/comment-leads/monitors` | 监控对象和缓存作品 |
+| `GET` | `/api/comment-leads/diagnosis` | 登录和采集诊断 |
+| `POST` | `/api/comment-leads/monitors` | 添加主页或视频监控 |
+| `POST` | `/api/comment-leads/profile-videos` | 解析或读取缓存作品 |
+| `GET` | `/api/comment-leads/leads` | 评论线索列表、搜索和状态筛选 |
+| `POST` | `/api/comment-leads/run` | 采集选中作品评论 |
+| `GET/POST` | `/api/comment-leads/export` | 导出全部或指定 `lead_ids` |
+
+## 5. 缓存、登录与数据
+
+数据根目录由 `pipeline/config.py` 管理，通常为 `%LOCALAPPDATA%\LeadShrimp\data`。重要文件包括：
+
+- `comment_leads.json`：监控对象和评论线索。
+- `short_video_profiles.json`：按 `sec_uid` 缓存主页作品和元数据。
+- 登录态相关缓存：由 `browser_cookies.py` 管理。
+- 导出目录：后端生成 CSV 后保存。
+
+主页作品缓存当前 TTL 是 6 小时；界面以超过 1 天作为“可能有新作品/数据”的提醒阈值。刷新后优先恢复监控对象中的 `cached_videos`，只有缓存不足或强制刷新时才重新访问主页。
+
+评论抓取由前端传入每条作品的数量上限，当前选项为 100/300/500/1000/2000。评论按稳定 ID 去重；作者评论通过作者 `sec_uid` 过滤。增量和分页完整度仍必须用真实账号验收，不要只看 UI 数量。
+
+## 6. 浏览器行为
+
+采集使用 Playwright。正常采集尽量保持浏览器后台运行，不抢用户当前窗口；登录和验证场景允许显示窗口。不要把“无头”理解成“没有登录态”：上下文会加载本地保存的 Cookie。若验证页出现，保持该窗口可见并提示用户完成验证，不能自动绕过。
+
+## 7. 构建发布
+
+通用版：
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-$env:PYTHONPATH = (Get-Location).Path
-python -m pytest lead_shrimp\tests licensing_server\tests -q
-python -m lead_shrimp.launcher --port 8922
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\lead_shrimp\build\build_public_release.ps1 -Version 0.1.0
 ```
 
-验证最小闭环：
+排错时先执行：
 
-1. 启动后打开本地首页，未登录时“快速排错”应明确提示登录。
-2. 完成抖音登录后，诊断应显示可采集状态。
-3. 用一个明确的视频 URL 做小规模采集，核对页面显示数、保存数、导出行数。
-4. 重复采集同一视频，不应重复写入同一个 `comment_id`；不同用户/不同话术不应消失。
-5. 商业包另测：无卡密不能使用受保护功能、正确卡密可激活、错误产品卡密不可解锁。
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\lead_shrimp\build\build_public_release.ps1 -Version 0.1.0 -SkipInstaller
+```
 
-## 7. 构建与发布
+该脚本会复制真实 Python 运行时、安装 `requirements.txt`、复制业务源码和前端、清除 `__pycache__`/测试目录、运行发布扫描，之后由 Inno Setup 生成安装包。它不是编译器，源码会随安装包存在，符合当前“先通用交付、不加密”的决定。
 
-构建入口：`lead_shrimp/build/一键打包获客虾.bat`。它会调用 `build_commercial_release.ps1`，并要求安装 Python、Nuitka 和 Inno Setup 6。构建阶段会把 `pipeline/license_runtime.py` 仅在临时输入目录替换为商业配置，源仓库不写入私钥。
+商业版入口仍是 `build_commercial_release.ps1`。商业版才涉及 Nuitka、远端卡密和签名授权。任何私钥、管理员令牌、Cookie、真实卡密、用户数据和生产数据库不得进入仓库。
 
-发布清单：
+## 8. 测试和接手规则
 
-1. 先通过上述真实采集闭环与测试。
-2. 输入新版本号构建；确认安全扫描通过。
-3. 对 EXE 进行代码签名（签名降低 SmartScreen 阻拦概率，但新发布者信誉仍需时间建立）。
-4. 在干净的 Windows 环境安装、卸载、覆盖安装和单实例启动测试。
-5. 上传正式 EXE 后，若需要自动更新，必须由更新服务发布带 Ed25519 签名的版本清单（版本、下载 HTTPS URL、大小、SHA-256、强制策略）。OSS 文件列表本身不是可信更新源。
-6. 留存 EXE 的 SHA-256、签名状态、构建版本和发布时间。
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+python -m pytest lead_shrimp\tests licensing_server\tests -q
+```
 
-## 8. 已知问题与下一步优先级
+接手改动时：
 
-### P0：真实采集验收
+1. 先读根 `README.md`、本文件、`BUG_TRIAGE.md` 和 `CHANGELOG.md`。
+2. 修改采集、缓存、排序、导出或错误提示前，先增加回归测试。
+3. 先跑局部测试，再跑全量测试和 staging 构建验证。
+4. 不删除用户数据、不重置工作区、不覆盖用户未提交改动。
+5. 真实平台问题只记录脱敏日志：URL 可保留路径类型，Cookie、Token、个人敏感信息必须移除。
 
-- 逐个验证目标视频的可见评论总数、实际抓取数和导出数。若少抓，保留请求/分页游标/响应状态的脱敏日志，先定位是登录、分页、平台限制还是写入去重。
-- 主页作品数与评论分页均应以实际响应是否还有下一页为准，不能硬编码 25 条或单页数量。
+## 9. 待办优先级
 
-### P1：商业发布可靠性
-
-- 安装器升级场景：主程序运行时应提示关闭或切换后重试，不应静默覆盖导致启动失败。
-- 单实例：重复点击快捷方式应激活已运行窗口；已安装后再次点击同版本安装包应走“已安装/启动或维护”体验，不要显示空安装目录。
-- 建立签名更新服务后，再做端到端升级测试。当前仓库不提供生产更新接口。
-
-### P2：构建体验
-
-- Nuitka 首次编译和 Zig 下载会耗时；保留缓存并在功能稳定后构建。发生“页面文件太小”类磁盘错误时先检查系统盘可用空间。
-- 后续可优化精确 include 列表和缓存，但不要通过把业务源码裸露进安装包来换速度。
-
-## 9. 给下一个 AI 的工作规则
-
-1. 先读本文件、根 `README.md`、`lead_shrimp/tests/`，再改动。
-2. 不修改用户的 `%LOCALAPPDATA%\LeadShrimp\data`，不删除浏览器会话或生产数据库。
-3. 不输出、提交或要求用户在聊天中粘贴任何私钥、管理员令牌、AccessKey、卡密或 SSH 密码。
-4. 修采集问题时必须新增回归测试，至少覆盖分页、稳定 ID 去重和用户可见错误提示。
-5. 任何涉及权限、支付、卡密、更新或外部上传的改动，都以服务端可信状态和签名校验为边界，并先做最小范围验证。
+- P0：用真实登录账号验收作品分页、发布时间、评论分页和增量采集。
+- P1：补充采集任务进度、分页游标和失败阶段的脱敏日志，解决“看起来卡住/失败原因不明”。
+- P1：验证通用安装包在干净 Windows、无系统 Python 环境下的安装、升级、卸载和 Edge 检测。
+- P2：继续收敛前端布局和低技术用户操作路径。
+- P3：商业版再处理授权、更新服务、代码保护和签名发布；不要提前混入通用版。
