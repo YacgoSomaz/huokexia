@@ -257,7 +257,7 @@
   <script>
     const $ = id => document.getElementById(id);
     let allLeads = [];
-    let state = { licensed:false, loggedIn:false, monitors:[] };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[] };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -282,7 +282,8 @@
       return data;
     }
     function updatePrimaryAction(){
-      if(!state.licensed){
+      const licenseReady=state.licensed||!state.licenseRequired;
+      if(!licenseReady){
         $('primaryAction').textContent='先激活卡密';
         $('primaryAction').onclick=()=>$('licenseModal').classList.add('show');
       }else if(!state.loggedIn){
@@ -292,19 +293,21 @@
         $('primaryAction').textContent='添加监控对象';
         $('primaryAction').onclick=()=>$('profileUrl').focus();
       }
-      $('stepLicense').classList.toggle('done',state.licensed);
+      $('stepLicense').classList.toggle('done',licenseReady);
       $('stepLogin').classList.toggle('done',state.loggedIn);
       $('stepMonitor').classList.toggle('done',(state.monitors||[]).length>0);
-      $('licenseStepText').textContent=state.licensed?'权益已生效。':'输入卡密后开放采集和导出。';
+      $('licenseStepText').textContent=state.licensed?'权益已生效。':(state.licenseRequired?'输入卡密后开放采集和导出。':'本地模式可直接使用。');
       $('loginStepText').textContent=state.loggedIn?'登录态可用。':'在官方窗口扫码或输入账号。';
     }
     function renderLicense(data){
       const ok=Boolean(data.licensed);
+      const required=Boolean(data.license_required ?? data.enforced);
       state.licensed=ok;
-      $('licenseDot').className='signal '+(ok?'ok':'');
-      $('licenseText').textContent=ok?'已激活':'未激活';
+      state.licenseRequired=required;
+      $('licenseDot').className='signal '+((ok||!required)?'ok':'');
+      $('licenseText').textContent=ok?'已激活':(required?'未激活':'本地可用');
       $('openLicense').textContent=ok?'刷新权益':'卡密激活';
-      if(!ok)$('licenseModal').classList.add('show');
+      if(!ok&&required)$('licenseModal').classList.add('show');
       updatePrimaryAction();
     }
     async function loadLicense(){

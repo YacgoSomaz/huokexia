@@ -23,6 +23,7 @@ def test_license_status_is_available_before_card_activation() -> None:
     assert payload["product_code"] == "lead_shrimp"
     assert "licensed" in payload
     assert payload["licensed"] is False
+    assert payload["license_required"] is False
 
 
 def test_frontend_does_not_expose_replay_navigation() -> None:
@@ -63,6 +64,16 @@ def test_frontend_explains_partial_collection_and_non_json_errors() -> None:
 
     assert "服务端返回了无法识别的数据" in page
     assert "部分完成" in page
+
+
+def test_frontend_only_auto_opens_activation_when_license_is_required() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert "const required=Boolean(data.license_required ?? data.enforced);" in page
+    assert "if(!ok&&required)$('licenseModal').classList.add('show');" in page
+    assert "本地模式可直接使用" in page
 
 
 def test_collection_diagnosis_turns_missing_login_into_a_next_step(monkeypatch) -> None:

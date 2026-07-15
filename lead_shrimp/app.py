@@ -97,11 +97,13 @@ def api_license_status() -> JSONResponse:
     # Development mode intentionally keeps local workflow testable, but it is
     # not a customer entitlement and must never be rendered as an activation.
     card_active = bool(status.get("ok")) and str(status.get("mode") or "") in {"licensed", "grace"}
+    license_required = bool(status.get("enforced"))
     return JSONResponse(
         {
             "ok": True,
             "product_code": PRODUCT_CODE,
             "licensed": card_active,
+            "license_required": license_required,
             **status,
         }
     )
