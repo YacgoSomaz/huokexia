@@ -54,10 +54,11 @@
     .step b{display:block;margin-bottom:1px;font-size:13px}
     .step small{color:var(--muted);line-height:1.25;font-size:12px}
     .step .btn{display:none}
-    .tabs{display:flex;gap:8px;align-items:center;padding:10px 12px;margin-bottom:14px;position:sticky;top:0;z-index:6;background:rgba(243,246,251,.94);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px}
-    .tab-btn{border:1px solid transparent;background:transparent;color:#41536d;border-radius:10px;padding:9px 13px;font-weight:900}
+    .workspace{display:grid;grid-template-columns:170px minmax(0,1fr);gap:14px;align-items:start}
+    .tabs{display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:10px;position:sticky;top:14px;z-index:6;background:rgba(243,246,251,.94);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px}
+    .tab-btn{border:1px solid transparent;background:transparent;color:#41536d;border-radius:10px;padding:11px 12px;font-weight:900;text-align:left}
     .tab-btn.active{background:#fff;color:var(--brand);border-color:#d6e0ee;box-shadow:0 8px 20px rgba(24,39,75,.07)}
-    .tab-spacer{flex:1}
+    .tab-spacer{height:6px;border-top:1px solid var(--line);margin-top:4px}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
     .main{display:block}
@@ -115,8 +116,8 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
-    @media(max-width:760px){.app{padding:16px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.tabs{overflow:auto}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:140px minmax(0,1fr)}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:760px){.app{padding:16px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -177,16 +178,17 @@
       </section>
     </section>
 
-    <nav class="tabs" aria-label="工作区切换">
-      <button class="tab-btn active" data-tab="leadsTab" type="button">评论线索</button>
-      <button class="tab-btn" data-tab="addTab" type="button">新增监控</button>
-      <button class="tab-btn" data-tab="worksTab" type="button">选择作品</button>
-      <button class="tab-btn" data-tab="monitorsTab" type="button">监控列表</button>
-      <span class="tab-spacer"></span>
-      <button id="quickLogin" class="btn secondary" type="button">检查登录</button>
-    </nav>
+    <section class="workspace">
+      <nav class="tabs" aria-label="工作区切换">
+        <button class="tab-btn active" data-tab="leadsTab" type="button">评论线索</button>
+        <button class="tab-btn" data-tab="addTab" type="button">新增监控</button>
+        <button class="tab-btn" data-tab="worksTab" type="button">选择作品</button>
+        <button class="tab-btn" data-tab="monitorsTab" type="button">监控列表</button>
+        <span class="tab-spacer"></span>
+        <button id="quickLogin" class="btn secondary" type="button">检查登录</button>
+      </nav>
 
-    <section class="main">
+      <section class="main">
       <section id="addTab" class="tab-panel">
         <section class="panel">
           <div class="head">
@@ -272,6 +274,7 @@
           </div>
           <div id="monitors" class="body monitor-list"><div class="empty">暂无监控对象</div></div>
         </section>
+      </section>
       </section>
     </section>
   </main>
