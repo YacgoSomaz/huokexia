@@ -114,6 +114,14 @@ def test_launcher_records_startup_exceptions_for_pythonw_users() -> None:
     assert "_startup_error_file" in source
 
 
+def test_app_disables_uvicorn_console_log_config_for_pythonw() -> None:
+    from lead_shrimp import app
+
+    source = __import__("inspect").getsource(app.main)
+
+    assert "log_config=None" in source
+
+
 def test_collection_failure_is_returned_as_json_for_the_frontend(monkeypatch) -> None:
     from lead_shrimp import app as app_module
 

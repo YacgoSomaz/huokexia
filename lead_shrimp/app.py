@@ -325,7 +325,16 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8922)
     args = parser.parse_args()
     config.ensure_dirs()
-    uvicorn.run(app, host=args.host, port=max(1, min(args.port, 65535)), log_level="warning")
+    # pythonw.exe has no stdout/stderr streams. Uvicorn's default formatter
+    # calls sys.stdout.isatty(), which crashes before binding the service.
+    uvicorn.run(
+        app,
+        host=args.host,
+        port=max(1, min(args.port, 65535)),
+        log_level="warning",
+        log_config=None,
+        access_log=False,
+    )
     return 0
 
 
