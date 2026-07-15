@@ -106,6 +106,8 @@
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
     .lead-list{display:grid;max-height:640px;overflow:auto}
     .lead{display:grid;grid-template-columns:30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead.drag-target{user-select:none;cursor:crosshair}
+    .lead.drag-target:hover{background:#f4f8ff}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
     .person{font-weight:900;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .subtle{color:var(--muted);font-size:12px;line-height:1.45}
@@ -302,6 +304,10 @@
             <option value="newest">最新评论在前</option>
             <option value="oldest">最早评论在前</option>
           </select>
+          <input id="leadStartDate" class="search date-input" type="date" aria-label="开始日期">
+          <input id="leadEndDate" class="search date-input" type="date" aria-label="结束日期">
+          <button id="selectLeadsByDate" class="btn secondary" type="button">按日期选择</button>
+          <button id="dragSelectLeads" class="btn secondary" type="button">滑动选择</button>
         </div>
         <div id="leadList" class="lead-list">
           <div class="lead header">
@@ -349,7 +355,7 @@
     const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
     const selectedLeadIds = new Set();
-    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[] };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:false, dragSelecting:false };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -560,11 +566,7 @@
       const days=Number($('leadAgeFilter').value||0);
       const cutoff=days?Date.now()-days*86400000:0;
       const sort=$('leadSort').value||'newest';
-      const rows=allLeads.filter(x=>{
-        const matchesTerm=!term||[x.commenter_nickname,x.content,x.comment_ip_location,x.ai_label,x.status].join(' ').toLowerCase().includes(term);
-        const stamp=videoTimestamp(x.create_time);
-        return matchesTerm&&(!days||(stamp>0&&stamp>=cutoff));
-      }).sort((a,b)=>{
+      const rows=allLeads.filter(x=>leadMatchesFilters(x,term,days,cutoff)).sort((a,b)=>{
         const av=videoTimestamp(a.create_time),bv=videoTimestamp(b.create_time);
         if(!av&&!bv)return 0;
         if(!av)return 1;
@@ -579,7 +581,7 @@
         bindLeadSelection([]);
         return;
       }
-      $('leadList').innerHTML=header+rows.map(x=>`<article class="lead">
+      $('leadList').innerHTML=header+rows.map(x=>`<article class="lead ${state.dragSelectMode?'drag-target':''}" data-lead-row="${escapeHtml(x.lead_id||'')}">
         <div><input type="checkbox" data-lead-id="${escapeHtml(x.lead_id||'')}"${selectedLeadIds.has(String(x.lead_id||''))?' checked':''} aria-label="选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></div>
         <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
@@ -591,16 +593,55 @@
       document.querySelectorAll('[data-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.profile,'_blank','noopener'));
       bindLeadSelection(rows);
     }
+    function leadMatchesFilters(x,term,days,cutoff){
+      const matchesTerm=!term||[x.commenter_nickname,x.content,x.comment_ip_location,x.ai_label,x.status].join(' ').toLowerCase().includes(term);
+      const stamp=videoTimestamp(x.create_time);
+      const start=$('leadStartDate').value?Date.parse($('leadStartDate').value+'T00:00:00'):0;
+      const end=$('leadEndDate').value?Date.parse($('leadEndDate').value+'T23:59:59'):0;
+      return matchesTerm&&(!days||(stamp>0&&stamp>=cutoff))&&(!start||(stamp>0&&stamp>=start))&&(!end||(stamp>0&&stamp<=end));
+    }
+    function setLeadSelection(id,checked){
+      const cleanId=String(id||'');
+      if(!cleanId)return;
+      if(checked)selectedLeadIds.add(cleanId);else selectedLeadIds.delete(cleanId);
+      updateExportButton();
+    }
+    function selectLeadsByDate(){
+      const start=$('leadStartDate').value;
+      const end=$('leadEndDate').value;
+      if(!start&&!end){toast('请先设置开始或结束日期',true);return}
+      const startStamp=start?Date.parse(start+'T00:00:00'):0;
+      const endStamp=end?Date.parse(end+'T23:59:59'):Number.MAX_SAFE_INTEGER;
+      const rows=allLeads.filter(row=>{
+        const stamp=videoTimestamp(row.create_time);
+        return stamp>0&&stamp>=startStamp&&stamp<=endStamp;
+      });
+      rows.forEach(row=>setLeadSelection(row.lead_id,true));
+      renderLeads();
+      toast(`已按日期加入 ${rows.length} 条评论`);
+    }
     function updateExportButton(){
       $('exportLeads').textContent=`导出选中（${selectedLeadIds.size}）`;
     }
     function bindLeadSelection(rows){
       document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
         const id=String(input.dataset.leadId||'');
-        if(input.checked)selectedLeadIds.add(id);else selectedLeadIds.delete(id);
-        updateExportButton();
+        setLeadSelection(id,input.checked);
         const master=$('selectVisibleLeads');
         if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
+      });
+      document.querySelectorAll('[data-lead-row]').forEach(row=>{
+        row.onpointerdown=event=>{
+          if(!state.dragSelectMode||event.button!==0)return;
+          state.dragSelecting=true;
+          state.dragValue=!selectedLeadIds.has(String(row.dataset.leadRow||''));
+          setLeadSelection(row.dataset.leadRow,state.dragValue);
+          row.setPointerCapture?.(event.pointerId);
+          event.preventDefault();
+        };
+        row.onpointerenter=()=>{
+          if(state.dragSelecting)setLeadSelection(row.dataset.leadRow,state.dragValue);
+        };
       });
       const master=$('selectVisibleLeads');
       if(master)master.onchange=()=>{
@@ -736,6 +777,16 @@
     $('search').oninput=renderLeads;
     $('leadAgeFilter').onchange=renderLeads;
     $('leadSort').onchange=renderLeads;
+    $('leadStartDate').onchange=renderLeads;
+    $('leadEndDate').onchange=renderLeads;
+    $('selectLeadsByDate').onclick=selectLeadsByDate;
+    $('dragSelectLeads').onclick=()=>{
+      state.dragSelectMode=!state.dragSelectMode;
+      $('dragSelectLeads').classList.toggle('active',state.dragSelectMode);
+      $('dragSelectLeads').textContent=state.dragSelectMode?'滑动选择已开启':'滑动选择';
+      renderLeads();
+    };
+    document.addEventListener('pointerup',()=>{state.dragSelecting=false});
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
