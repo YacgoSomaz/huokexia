@@ -290,6 +290,18 @@ def test_frontend_supports_selective_lead_export() -> None:
     assert "/api/comment-leads/export" in page
 
 
+def test_comment_collection_default_is_not_limited_to_100() -> None:
+    from lead_shrimp.app import frontend_path
+    from pipeline import comment_leads
+
+    page = frontend_path().read_text(encoding="utf-8")
+    source = __import__("inspect").getsource(comment_leads.capture_video_comments)
+
+    assert '<option value="500" selected>500 条</option>' in page
+    assert "max_comments: int = 500" in source
+    assert "max_capture_seconds = min(300" in source
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
