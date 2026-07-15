@@ -167,6 +167,15 @@ def test_profile_render_waits_for_api_metadata_before_dom_fallback() -> None:
     assert "tick >= 14" in source
 
 
+def test_profile_fallback_enriches_video_ids_from_detail_endpoint() -> None:
+    from pipeline import short_video
+
+    source = __import__("inspect").getsource(short_video._enrich_profile_videos)
+
+    assert "aweme/detail" in source
+    assert "aweme_id" in source
+
+
 def test_work_picker_shows_pinned_works_and_marks_them_without_selecting() -> None:
     from lead_shrimp.app import frontend_path
 
