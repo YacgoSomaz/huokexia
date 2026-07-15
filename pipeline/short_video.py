@@ -979,6 +979,7 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
         empty_reads = 0
         metadata_retry = 0
         dom_fallback_videos: list[dict[str, Any]] = []
+        fallback_metadata_enriched = False
         # 快速轮询首屏 DOM，但不要因为短时间没有新增就过早返回。
         # 抖音作品接口经常分批返回；目标数越大，越需要给翻页和滚动更长窗口。
         max_ticks = 44 + min(60, max(0, recent_count - 20) * 3)
@@ -1053,6 +1054,9 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
             # 先缓存页面卡片，给作品接口完整的重试窗口，避免过早结束。
             if not api_videos and tick >= 14:
                 dom_fallback_videos = _read_page_videos(page)
+            if not api_videos and tick >= 30 and dom_fallback_videos and not fallback_metadata_enriched:
+                dom_fallback_videos = _enrich_profile_videos(page, dom_fallback_videos)
+                fallback_metadata_enriched = True
             for video in (dom_fallback_videos if not api_videos and tick >= 30 else []):
                 url_key = _video_key(video)
                 if not url_key or url_key in seen:
@@ -1458,6 +1462,34 @@ def _videos_from_aweme_list(items: list[dict[str, Any]]) -> list[dict[str, Any]]
             "source": "profile_api",
         })
     return videos
+
+
+def _enrich_profile_videos(page: Any, videos: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Use each known work id to fill metadata missing from a rendered card."""
+    enriched_videos: list[dict[str, Any]] = []
+    for video in videos:
+        item = dict(video)
+        aweme_id = str(item.get("id") or "").strip()
+        if aweme_id:
+            detail_url = (
+                "https://www.douyin.com/aweme/v1/web/aweme/detail/?"
+                f"{urlencode({'aweme_id': aweme_id, 'device_platform': 'webapp', 'aid': '6383'})}"
+            )
+            try:
+                detail = page.request.get(detail_url, timeout=8000).json()
+                raw = detail.get("aweme_detail") if isinstance(detail, dict) else None
+                detail_videos = _videos_from_aweme_list([raw] if isinstance(raw, dict) else [])
+                if detail_videos:
+                    item.update({
+                        key: detail_videos[0].get(key)
+                        for key in ("title", "cover_url", "like_count", "comment_count", "share_count", "publish_time", "create_time", "pinned")
+                        if detail_videos[0].get(key) not in (None, "")
+                    })
+                    item["source"] = "profile_detail"
+            except Exception:  # noqa: BLE001 - keep the card if the detail endpoint is restricted.
+                pass
+        enriched_videos.append(item)
+    return enriched_videos
 
 
 def _profile_cache_path() -> Path:
