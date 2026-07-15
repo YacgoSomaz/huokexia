@@ -184,3 +184,15 @@ def test_profile_metadata_retries_captured_post_endpoint() -> None:
 
     assert "metadata_retry" in source
     assert "dom_fallback_videos" in source
+
+
+def test_monitor_list_is_a_compact_avatar_grid() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert ".monitor-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))" in page
+    assert "class=\"monitor-identity\"" in page
+    assert "class=\"monitor-avatar\"" in page
+    assert 'const url=escapeHtml(m.target_url||m.raw_url||'');' not in page
+    assert '作品 ${escapeHtml(m.max_videos||5)} 条' not in page
