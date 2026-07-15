@@ -610,9 +610,17 @@ def _login_state_valid(state: dict[str, Any], *, now: int | None = None) -> bool
     return bool(updated_at) and current - updated_at < LOGIN_STATE_TTL_SEC
 
 
-def _launch_comment_context(playwright: Any, profile: Path, *, headless: bool) -> tuple[Any, str]:
+def _launch_comment_context(
+    playwright: Any,
+    profile: Path,
+    *,
+    headless: bool,
+    background: bool = False,
+) -> tuple[Any, str]:
     """Use Edge for both product modules, with Chromium only as a local fallback."""
     base = {"headless": headless, "viewport": {"width": 1365, "height": 768}, "locale": "zh-CN"}
+    if background and not headless:
+        base["args"] = ["--start-minimized", "--window-position=-32000,-32000"]
     for browser, extra in (("msedge", {"channel": "msedge"}), ("chromium", {})):
         try:
             return playwright.chromium.launch_persistent_context(str(profile), **base, **extra), browser
@@ -783,7 +791,8 @@ def capture_video_comments(
     url: str,
     *,
     max_comments: int = 500,
-    headed: bool = False,
+    headed: bool = True,
+    background: bool = True,
     allow_interactive_fallback: bool = True,
 ) -> CaptureResult:
     """Capture public comments from one Douyin video using an authorized browser profile."""
@@ -819,7 +828,12 @@ def capture_video_comments(
     requested_reply_pages: set[tuple[str, int]] = set()
 
     with sync_playwright() as p:
-        context, browser = _launch_comment_context(p, profile, headless=not headed)
+        context, browser = _launch_comment_context(
+            p,
+            profile,
+            headless=not headed,
+            background=background,
+        )
         shared_jar = browser_cookies.cached_jar() if browser_cookies.shared_status().get("has_login") else {}
         if shared_jar:
             context.add_cookies([
@@ -919,9 +933,11 @@ def capture_video_comments(
                     url,
                     max_comments=max_comments,
                     headed=True,
+                    background=False,
                     allow_interactive_fallback=False,
                 )
             if headed:
+                page.bring_to_front()
                 deadline = time.time() + 180
                 while time.time() < deadline and _page_needs_verification(page):
                     page.wait_for_timeout(1000)
