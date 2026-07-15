@@ -312,6 +312,19 @@ def test_work_selection_has_a_comment_count_control() -> None:
     assert "$('workCommentLimit').value" in page
 
 
+def test_cached_works_restore_after_refresh_and_warn_after_one_day() -> None:
+    from lead_shrimp.app import frontend_path
+    from pipeline import comment_leads
+
+    page = frontend_path().read_text(encoding="utf-8")
+    source = __import__("inspect").getsource(comment_leads._profile_monitor_metadata)
+
+    assert "works_cached_at" in source
+    assert "function loadCachedWorks" in page
+    assert "超过 1 天未刷新作品" in page
+    assert "cached_videos" in page
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
