@@ -76,11 +76,12 @@
     .field input:focus,.field textarea:focus,.field select:focus{border-color:#91b5ff;box-shadow:0 0 0 4px #edf4ff}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
-    .monitor-list{display:grid;gap:10px;max-height:620px;overflow:auto}
-    .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:13px;display:grid;gap:10px}
-    .monitor-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .monitor-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;max-height:620px;overflow:auto}
+    .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:12px;display:grid;gap:11px}
+    .monitor-identity{display:flex;align-items:center;gap:10px;min-width:0}
+    .monitor-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#eaf1ff;color:var(--brand);display:grid;place-items:center;font-weight:900;flex:0 0 auto}
+    .monitor-copy{min-width:0;display:grid;gap:6px}
     .monitor strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .monitor .url{color:var(--muted);font-size:12px;line-height:1.45;word-break:break-all}
     .meta{display:flex;gap:8px;flex-wrap:wrap}
     .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
     .chip.good{background:var(--green-soft);color:var(--green)}
@@ -123,7 +124,7 @@
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
     @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
-    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
+    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
 <body>
@@ -395,13 +396,13 @@
       $('monitorCount').textContent=rows.length;
       $('monitors').innerHTML=rows.length?rows.map(m=>{
         const title=escapeHtml(m.title||m.author_name||'待识别账号');
-        const url=escapeHtml(m.target_url||m.raw_url||'');
-        const last=Number(m.last_count||0);
+        const avatar=escapeHtml(m.author_avatar||m.avatar_url||'');
         const err=String(m.last_error||'').trim();
         return `<article class="monitor">
-          <div class="monitor-title"><strong>${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
-          <div class="url">${url}</div>
-          <div class="meta"><span class="chip">作品 ${escapeHtml(m.max_videos||5)} 条</span><span class="chip">新增 ${last} 条</span></div>
+          <div class="monitor-identity">
+            ${avatar?`<img class="monitor-avatar" src="${avatar}" alt="">`:'<span class="monitor-avatar" aria-hidden="true">获</span>'}
+            <div class="monitor-copy"><strong title="${title}">${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
+          </div>
           <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
         </article>`;
       }).join(''):'<div class="empty">暂无监控对象。粘贴一个抖音主页或视频链接即可开始。</div>';
