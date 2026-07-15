@@ -364,6 +364,7 @@
     function switchTab(id){
       document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id));
       document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.toggle('active',panel.id===id));
+      if(id==='worksTab'&&!state.pendingVideos.length)loadCachedWorks();
     }
     async function api(path,options={}){
       const res=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
@@ -485,7 +486,10 @@
         return (includePinned||!v.pinned)&&(!days||Boolean(stamp)&&stamp>=cutoff);
       });
       const hiddenPinned=state.pendingVideos.filter(v=>v.pinned&&!includePinned).length;
-      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。${hiddenPinned?`已隐藏 ${hiddenPinned} 条置顶作品。`: '置顶作品已展示并标记，默认不勾选。'}`;
+      const cachedAt=Number(state.pendingMonitor&&state.pendingMonitor.works_cached_at||0);
+      const stale=cachedAt>0&&Date.now()-cachedAt>86400000;
+      const staleHint=stale?'超过 1 天未刷新作品，可能有新作品或新评论，请刷新作品或重新采集。':'';
+      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。${hiddenPinned?`已隐藏 ${hiddenPinned} 条置顶作品。`: '置顶作品已展示并标记，默认不勾选。'} ${staleHint}`;
       $('workList').innerHTML=visible.length?visible.map(({v,index})=>`<label class="work">
         <input type="checkbox" data-work-index="${index}" ${v.selected===true?'checked':''}${v.selected===false?'':defaultWorkSelected(v)?' checked':''}>
         <img src="${escapeHtml(v.cover_url||'')}" alt="">
@@ -506,6 +510,12 @@
       $('workAgeFilter').value='0';
       $('includePinnedWorks').checked=true;
       renderWorkList();
+    }
+    function loadCachedWorks(){
+      const monitor=(state.monitors||[]).find(item=>Array.isArray(item.cached_videos)&&item.cached_videos.length);
+      if(!monitor)return false;
+      renderWorks(monitor,monitor.cached_videos);
+      return true;
     }
     function setWorkLoading(active,text='正在解析作品，请稍候…'){
       const panel=$('workLoading');

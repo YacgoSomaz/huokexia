@@ -138,6 +138,9 @@ def load_store() -> dict[str, Any]:
             if value and not monitor.get(key):
                 monitor[key] = value
                 changed = True
+        if isinstance(monitor.get("cached_videos"), list) and monitor.get("cached_videos") and not monitor.get("works_cached_at"):
+            monitor["works_cached_at"] = int(monitor.get("updated_at") or monitor.get("last_run_at") or _now())
+            changed = True
         if monitor.get("author_name") and monitor.get("title") in {"", "抖音视频评论", "待识别账号"}:
             monitor["title"] = monitor["author_name"]
             changed = True
@@ -1025,6 +1028,8 @@ def _update_monitor_after_run(
         monitor["cached_videos"] = [
             dict(video) for video in metadata["cached_videos"] if isinstance(video, dict)
         ]
+    if metadata.get("works_cached_at"):
+        monitor["works_cached_at"] = int(metadata["works_cached_at"])
     _merge_metadata(monitor, metadata)
     if monitor.get("author_name"):
         monitor["title"] = monitor["author_name"]
@@ -1042,6 +1047,7 @@ def _profile_monitor_metadata(profile: dict[str, Any], videos: list[dict[str, An
         "video_title": f"最近 {len(videos)} 条作品评论监控" if videos else "",
         "discovered_video_count": len(videos),
         "cached_videos": [dict(video) for video in videos if isinstance(video, dict)],
+        "works_cached_at": _now(),
     }
 
 
