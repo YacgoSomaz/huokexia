@@ -87,6 +87,10 @@
     .chip.good{background:var(--green-soft);color:var(--green)}
     .chip.warn{background:var(--amber-soft);color:#9a6108}
     .work-picker{display:grid;gap:12px}
+    .work-loading{display:none;align-items:center;gap:10px;padding:12px;border:1px solid #cfe0fb;border-radius:10px;background:#f4f8ff;color:#315a99}
+    .work-loading.show{display:flex}
+    .work-loading .spinner{width:18px;height:18px;border:2px solid #d8e6fb;border-top-color:var(--brand);border-radius:50%;animation:work-spin .8s linear infinite;flex:0 0 auto}
+    @keyframes work-spin{to{transform:rotate(360deg)}}
     .work-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid #e1e9f4;border-radius:10px;background:#f8fbff}
     .work-filters label{display:flex;align-items:center;gap:8px;color:#42536d;font-size:13px;font-weight:800}
     .work-filters select{min-width:116px;border:1px solid #cfdceb;border-radius:8px;background:#fff;color:var(--ink);padding:7px 9px}
@@ -245,6 +249,10 @@
             <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
           </div>
           <div id="workPicker" class="work-picker body">
+            <div id="workLoading" class="work-loading" role="status" aria-live="polite">
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="workLoadingText">正在解析作品，请稍候…</span>
+            </div>
             <div class="work-filters" aria-label="作品筛选">
               <label for="workAgeFilter">发布时间
                 <select id="workAgeFilter">
@@ -472,14 +480,30 @@
       $('includePinnedWorks').checked=true;
       renderWorkList();
     }
+    function setWorkLoading(active,text='正在解析作品，请稍候…'){
+      const panel=$('workLoading');
+      panel.classList.toggle('show',active);
+      $('workLoadingText').textContent=text;
+      $('resolveWorksBtn').disabled=active;
+      $('collectSelectedWorks').disabled=active;
+      if(active){
+        $('workPickerMeta').textContent='正在读取作品发布日期、互动数据和置顶状态…';
+        $('workList').innerHTML='<div class="empty">正在打开主页并获取作品信息，请稍候…</div>';
+      }
+    }
     async function resolveWorks(payload){
-      setJob('正在解析作品','浏览器正在读取主页作品列表，暂不采集评论。','解析中');
-      const d=await api('/api/comment-leads/profile-videos',{method:'POST',body:JSON.stringify(payload)});
-      renderWorks(d.monitor,d.videos||[]);
       switchTab('worksTab');
-      setJob('请选择作品',`已读取 ${Number((d.videos||[]).length)} 条作品，确认后再开始采集评论。`,`${Number((d.videos||[]).length)} 条`);
-      await Promise.all([loadMonitors(),loadDiagnosis(d.monitor&&d.monitor.id)]);
-      return d;
+      setWorkLoading(true,'正在读取主页作品…');
+      setJob('正在解析作品','浏览器正在读取主页作品列表，暂不采集评论。','解析中');
+      try{
+        const d=await api('/api/comment-leads/profile-videos',{method:'POST',body:JSON.stringify(payload)});
+        renderWorks(d.monitor,d.videos||[]);
+        setJob('请选择作品',`已读取 ${Number((d.videos||[]).length)} 条作品，确认后再开始采集评论。`,`${Number((d.videos||[]).length)} 条`);
+        await Promise.all([loadMonitors(),loadDiagnosis(d.monitor&&d.monitor.id)]);
+        return d;
+      }finally{
+        setWorkLoading(false);
+      }
     }
     async function resolveMonitorWorks(id){
       const monitor=(state.monitors||[]).find(x=>String(x.id)===String(id));
@@ -586,7 +610,10 @@
       try{
         await resolveWorks(payload);
         toast('作品列表已解析，请选择要采集的作品');
-      }catch(err){toast(err.message,true)}
+      }catch(err){
+        setJob('解析失败',err.message,'请重试');
+        toast(err.message,true);
+      }
     };
     $('activateCard').onclick=async()=>{
       try{
