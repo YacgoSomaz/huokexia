@@ -212,6 +212,16 @@ def test_profile_post_endpoint_retries_are_bounded() -> None:
     assert "post_api_attempts[api_url]" in source
 
 
+def test_profile_api_requests_have_a_per_run_budget() -> None:
+    from pipeline.short_video import _render_profile_events_locked
+
+    source = __import__("inspect").getsource(_render_profile_events_locked)
+
+    assert "profile_api_request_count" in source
+    assert "profile_api_request_count >= 4" in source
+    assert "post_api_urls[-2:]" in source
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
