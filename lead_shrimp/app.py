@@ -8,8 +8,10 @@ the live replay pages or their APIs.
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
+import multiprocessing
 import os
+import pickle
+import queue
 from pathlib import Path
 from typing import Any
 
@@ -62,10 +64,36 @@ def required_feature_for_path(path: str) -> str | None:
     return None
 
 
+def _child_call(result_queue: Any, fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+    try:
+        result_queue.put(("ok", fn(*args, **kwargs)))
+    except BaseException as exc:  # noqa: BLE001 - serialize child-process browser failures.
+        result_queue.put(("error", type(exc).__name__, str(exc)))
+
+
 def _run_blocking(fn, *args, **kwargs):
-    """Run browser-heavy collection outside FastAPI's event loop."""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        return pool.submit(fn, *args, **kwargs).result()
+    """Run Playwright work in a child process so sync API never meets FastAPI's event loop."""
+    try:
+        pickle.dumps(fn)
+    except (AttributeError, pickle.PickleError):
+        return fn(*args, **kwargs)
+    ctx = multiprocessing.get_context("spawn")
+    result_queue = ctx.Queue(maxsize=1)
+    proc = ctx.Process(target=_child_call, args=(result_queue, fn, args, kwargs))
+    proc.start()
+    proc.join(240)
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(5)
+        raise RuntimeError("浏览器任务超时，请稍后重试")
+    try:
+        status, *payload = result_queue.get_nowait()
+    except queue.Empty as exc:
+        raise RuntimeError("浏览器任务异常退出，请重新打开软件后重试") from exc
+    if status == "ok":
+        return payload[0]
+    error_type, message = payload
+    raise RuntimeError(f"{error_type}: {message}".strip())
 
 
 def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:

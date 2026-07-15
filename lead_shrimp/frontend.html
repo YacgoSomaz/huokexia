@@ -48,6 +48,7 @@
     .next-card small{display:block;color:#c4d3e8;line-height:1.45}
     .setup{padding:16px;display:grid;gap:12px}
     .step{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid #e8edf5;border-radius:12px;background:#fbfdff}
+    .setup.hidden,.step.hidden{display:none}
     .step-no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:900}
     .step.done .step-no{background:var(--green-soft);color:var(--green)}
     .step b{display:block;margin-bottom:2px}
@@ -74,6 +75,13 @@
     .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
     .chip.good{background:var(--green-soft);color:var(--green)}
     .chip.warn{background:var(--amber-soft);color:#9a6108}
+    .work-picker{display:none;border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+    .work-picker.show{display:grid;gap:12px}
+    .work-list{display:grid;gap:10px;max-height:420px;overflow:auto}
+    .work{display:grid;grid-template-columns:22px 74px minmax(0,1fr);gap:10px;align-items:start;border:1px solid #e5ebf4;border-radius:12px;padding:10px;background:#fbfdff}
+    .work input{width:18px;height:18px;margin-top:26px}
+    .work img{width:74px;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#e9eef7}
+    .work-title{font-weight:900;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .inbox{min-width:0}
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
@@ -144,7 +152,7 @@
         </div>
       </section>
 
-      <section class="panel setup">
+      <section id="setupPanel" class="panel setup">
         <article id="stepLicense" class="step">
           <span class="step-no">1</span>
           <div><b>激活软件</b><small id="licenseStepText">输入卡密后开放采集和导出。</small></div>
@@ -197,8 +205,18 @@
                 </select>
               </div>
             </div>
-            <button class="btn" type="submit" style="width:100%">保存并开始采集</button>
+            <button id="resolveWorksBtn" class="btn" type="submit" style="width:100%">解析作品列表</button>
             <p class="microcopy" style="margin-top:12px">仅采集公开评论；不会自动私信、关注或发布内容。重复评论按评论 ID 去重。</p>
+            <section id="workPicker" class="work-picker">
+              <div class="head" style="padding:0;border:0">
+                <div>
+                  <h2>选择要采集评论的作品</h2>
+                  <small id="workPickerMeta">先解析主页，确认作品后再采集评论。</small>
+                </div>
+                <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
+              </div>
+              <div id="workList" class="work-list"></div>
+            </section>
           </form>
         </section>
 
@@ -257,7 +275,7 @@
   <script>
     const $ = id => document.getElementById(id);
     let allLeads = [];
-    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[] };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[] };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -296,6 +314,10 @@
       $('stepLicense').classList.toggle('done',licenseReady);
       $('stepLogin').classList.toggle('done',state.loggedIn);
       $('stepMonitor').classList.toggle('done',(state.monitors||[]).length>0);
+      $('stepLicense').classList.toggle('hidden',licenseReady);
+      $('stepLogin').classList.toggle('hidden',!licenseReady||state.loggedIn);
+      $('stepMonitor').classList.toggle('hidden',!licenseReady||!state.loggedIn||(state.monitors||[]).length>0);
+      $('setupPanel').classList.toggle('hidden',licenseReady&&state.loggedIn&&(state.monitors||[]).length>0);
       $('licenseStepText').textContent=state.licensed?'权益已生效。':(state.licenseRequired?'输入卡密后开放采集和导出。':'本地模式可直接使用。');
       $('loginStepText').textContent=state.loggedIn?'登录态可用。':'在官方窗口扫码或输入账号。';
     }
@@ -335,10 +357,10 @@
           <div class="monitor-title"><strong>${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
           <div class="url">${url}</div>
           <div class="meta"><span class="chip">作品 ${escapeHtml(m.max_videos||5)} 条</span><span class="chip">新增 ${last} 条</span></div>
-          <button class="btn secondary" data-run="${escapeHtml(m.id)}">立即采集</button>
+          <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
         </article>`;
       }).join(''):'<div class="empty">暂无监控对象。粘贴一个抖音主页或视频链接即可开始。</div>';
-      document.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runMonitor(b.dataset.run));
+      document.querySelectorAll('[data-resolve]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.resolve));
       updatePrimaryAction();
     }
     async function loadMonitors(){
@@ -352,6 +374,54 @@
         catch(_){return text}
       }
       return text;
+    }
+    function formatNumber(value){
+      const n=Number(value);
+      if(!Number.isFinite(n))return '未知';
+      if(n>=10000)return (n/10000).toFixed(n>=100000?0:1)+'万';
+      return String(n);
+    }
+    function formatVideoDate(value){
+      const n=Number(value);
+      if(Number.isFinite(n)&&n>0)return new Date(n*1000).toLocaleDateString('zh-CN');
+      return '未知';
+    }
+    function renderWorks(monitor,videos){
+      state.pendingMonitor=monitor;
+      state.pendingVideos=videos||[];
+      $('workPicker').classList.add('show');
+      $('workPickerMeta').textContent=`已解析 ${state.pendingVideos.length} 条作品，勾选后再采集评论。`;
+      $('workList').innerHTML=state.pendingVideos.length?state.pendingVideos.map((v,i)=>`<label class="work">
+        <input type="checkbox" data-work-index="${i}" ${v.selected!==false?'checked':''}>
+        <img src="${escapeHtml(v.cover_url||'')}" alt="">
+        <div>
+          <div class="work-title">${escapeHtml(v.title||'未命名作品')}</div>
+          <div class="meta" style="margin-top:8px">
+            <span class="chip">点赞 ${escapeHtml(formatNumber(v.like_count))}</span>
+            <span class="chip">评论 ${escapeHtml(formatNumber(v.comment_count))}</span>
+            <span class="chip">发布 ${escapeHtml(formatVideoDate(v.publish_time||v.create_time))}</span>
+          </div>
+        </div>
+      </label>`).join(''):'<div class="empty">没有解析到作品，请确认主页公开可访问，或直接粘贴单条视频链接。</div>';
+    }
+    async function resolveWorks(payload){
+      setJob('正在解析作品','浏览器正在读取主页作品列表，暂不采集评论。','解析中');
+      const d=await api('/api/comment-leads/profile-videos',{method:'POST',body:JSON.stringify(payload)});
+      renderWorks(d.monitor,d.videos||[]);
+      setJob('请选择作品',`已读取 ${Number((d.videos||[]).length)} 条作品，确认后再开始采集评论。`,`${Number((d.videos||[]).length)} 条`);
+      await Promise.all([loadMonitors(),loadDiagnosis(d.monitor&&d.monitor.id)]);
+      return d;
+    }
+    async function resolveMonitorWorks(id){
+      const monitor=(state.monitors||[]).find(x=>String(x.id)===String(id));
+      if(!monitor)return;
+      try{
+        await resolveWorks({url:monitor.target_url||monitor.raw_url,title:monitor.title||'',max_videos:Number(monitor.max_videos||5),max_comments:Number(monitor.max_comments||100)});
+        toast('作品列表已解析，请选择要采集的作品');
+      }catch(e){
+        setJob('解析失败',e.message,'请重试');
+        toast(e.message,true);
+      }
     }
     function renderLeads(){
       const term=$('search').value.trim().toLowerCase();
@@ -390,8 +460,8 @@
       if(action)action.onclick=()=>{
         if(action.dataset.diagnosisAction==='login')openLogin();
         else if(action.dataset.diagnosisAction==='retry'){
-          const first=document.querySelector('[data-run]');
-          if(first)runMonitor(first.dataset.run);
+          const first=document.querySelector('[data-resolve]');
+          if(first)resolveMonitorWorks(first.dataset.resolve);
         }else if(action.dataset.diagnosisAction==='monitor')$('profileUrl').focus();
       };
     }
@@ -413,6 +483,24 @@
         await loadDiagnosis(id);
       }
     }
+    async function runSelectedWorks(){
+      const monitor=state.pendingMonitor||{};
+      const selected=Array.from(document.querySelectorAll('[data-work-index]:checked')).map(input=>state.pendingVideos[Number(input.dataset.workIndex)]).filter(Boolean);
+      if(!monitor.id){toast('请先解析主页作品',true);return}
+      if(!selected.length){toast('请至少选择一个作品',true);return}
+      setJob('正在采集评论',`已选择 ${selected.length} 条作品，正在读取公开评论。`,'进行中');
+      try{
+        const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:monitor.id,videos:selected,max_comments:Number($('maxComments').value)})});
+        const partial=Boolean(d.error);
+        setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);
+        toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成');
+        await Promise.all([loadLeads(),loadMonitors(),loadDiagnosis(monitor.id)]);
+      }catch(e){
+        setJob('采集未完成',e.message,'请重试');
+        toast(e.message,true);
+        await loadDiagnosis(monitor.id);
+      }
+    }
     async function openLogin(){
       try{
         toast('已打开登录窗口，请完成登录后回到这里。');
@@ -426,11 +514,8 @@
       e.preventDefault();
       const payload={url:$('profileUrl').value,title:$('monitorName').value,max_videos:Number($('maxVideos').value),max_comments:Number($('maxComments').value)};
       try{
-        const d=await api('/api/comment-leads/monitors',{method:'POST',body:JSON.stringify(payload)});
-        toast('已保存监控对象，开始采集');
-        await runMonitor(d.monitor.id);
-        $('profileUrl').value='';
-        $('monitorName').value='';
+        await resolveWorks(payload);
+        toast('作品列表已解析，请选择要采集的作品');
       }catch(err){toast(err.message,true)}
     };
     $('activateCard').onclick=async()=>{
@@ -459,6 +544,7 @@
     $('focusAddBtn').onclick=()=>$('profileUrl').focus();
     $('reloadMonitors').onclick=loadMonitors;
     $('reloadLeads').onclick=loadLeads;
+    $('collectSelectedWorks').onclick=runSelectedWorks;
     $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
     $('search').oninput=renderLeads;
 

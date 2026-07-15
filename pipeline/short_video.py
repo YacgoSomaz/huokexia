@@ -1421,6 +1421,7 @@ def _videos_from_aweme_list(items: list[dict[str, Any]]) -> list[dict[str, Any]]
         )
         stats = raw.get("statistics") or {}
         play_urls = _extract_play_urls_from_aweme_payload({"aweme_detail": raw})
+        create_time = raw.get("create_time")
         videos.append({
             "id": aweme_id,
             "title": str(raw.get("desc") or f"作品 {len(videos) + 1}").strip() or f"作品 {len(videos) + 1}",
@@ -1428,6 +1429,10 @@ def _videos_from_aweme_list(items: list[dict[str, Any]]) -> list[dict[str, Any]]
             "cover_url": str(cover or "").strip(),
             "play_url": play_urls[0] if play_urls else "",
             "like_count": stats.get("digg_count"),
+            "comment_count": stats.get("comment_count"),
+            "share_count": stats.get("share_count"),
+            "publish_time": create_time,
+            "create_time": create_time,
             "pinned": bool(raw.get("is_top")),
             "source": "profile_api",
         })
