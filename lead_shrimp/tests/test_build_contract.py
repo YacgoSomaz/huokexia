@@ -35,3 +35,13 @@ def test_start_bat_uses_the_verified_launcher_and_keeps_a_failure_log() -> None:
     assert "lead_shrimp.launcher" in launcher
     assert "lead_shrimp.app" not in launcher
     assert "LeadShrimp-launch.log" in launcher
+
+
+def test_public_build_is_unlocked_and_still_compiles_a_standalone_app() -> None:
+    script = (ROOT / "build" / "build_public_release.ps1").read_text(encoding="utf-8")
+
+    assert "LICENSE_ENFORCE = False" in script
+    assert "--mode=standalone" in script
+    assert "check_release.py" in script
+    assert "--commercial" not in script
+    assert "LICENSE_ADMIN_TOKEN" not in script
