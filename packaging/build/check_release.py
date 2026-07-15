@@ -122,7 +122,7 @@ def _is_forbidden_path(path: Path, root: Path) -> str:
 
 def _skip_vendor_content_scan(rel: Path) -> bool:
     parts = tuple(part.lower() for part in rel.parts)
-    if parts and parts[0] == "_internal":
+    if parts and parts[0] in {"_internal", "python"}:
         return True
     return parts[:3] in {
         ("app", "pipeline_data", "static"),
@@ -139,6 +139,8 @@ def scan_release(root: Path, *, commercial: bool = False) -> list[str]:
         if not path.is_file():
             continue
         rel = path.relative_to(root)
+        if rel.parts and rel.parts[0].lower() == "python":
+            continue
         reason = _is_forbidden_path(path, root)
         if reason:
             findings.append(f"{rel} -> {reason}")
