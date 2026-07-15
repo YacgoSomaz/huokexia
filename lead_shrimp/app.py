@@ -230,7 +230,7 @@ def api_comment_leads_add_monitor(payload: dict[str, object] = Body(...)) -> JSO
             str(payload.get("url") or ""),
             title=str(payload.get("title") or ""),
             owner=str(payload.get("owner") or ""),
-            max_comments=_bounded_int(payload.get("max_comments"), default=100, minimum=1, maximum=2000),
+            max_comments=_bounded_int(payload.get("max_comments"), default=500, minimum=1, maximum=2000),
             max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
             force=bool(payload.get("force")),
         )
@@ -246,7 +246,7 @@ def api_comment_leads_profile_videos(payload: dict[str, object] = Body(...)) -> 
             comment_leads.resolve_profile_works,
             str(payload.get("url") or ""),
             owner=str(payload.get("owner") or ""),
-            max_comments=_bounded_int(payload.get("max_comments"), default=100, minimum=1, maximum=2000),
+            max_comments=_bounded_int(payload.get("max_comments"), default=500, minimum=1, maximum=2000),
             max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
         )
     except (TypeError, ValueError) as exc:
@@ -261,7 +261,7 @@ def api_comment_leads_profile_videos(payload: dict[str, object] = Body(...)) -> 
 def api_comment_leads_list(
     status: str = Query(default="", max_length=64),
     keyword: str = Query(default="", max_length=128),
-    limit: int = Query(default=500, ge=1, le=5000),
+    limit: int = Query(default=5000, ge=1, le=5000),
 ) -> JSONResponse:
     return JSONResponse({"ok": True, "leads": comment_leads.list_leads(status=status, keyword=keyword, limit=limit)})
 
@@ -270,7 +270,7 @@ def api_comment_leads_list(
 def api_comment_leads_run(payload: dict[str, object] = Body(...)) -> JSONResponse:
     selected_videos = payload.get("videos")
     monitor_id = str(payload.get("monitor_id") or "").strip()
-    max_comments = _bounded_int(payload.get("max_comments"), default=100, minimum=1, maximum=2000)
+    max_comments = _bounded_int(payload.get("max_comments"), default=500, minimum=1, maximum=2000)
     try:
         if monitor_id and isinstance(selected_videos, list):
             result = _run_blocking(comment_leads.run_selected_videos, monitor_id, selected_videos[:50], max_comments=max_comments)

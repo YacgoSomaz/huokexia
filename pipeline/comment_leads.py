@@ -196,7 +196,7 @@ def add_monitor(
     *,
     title: str = "",
     owner: str = "",
-    max_comments: int = 100,
+    max_comments: int = 500,
     max_videos: int = 5,
 ) -> dict[str, Any]:
     raw_url = extract_first_url(url)
@@ -236,7 +236,7 @@ def add_monitor(
         "video_title": (existing or {}).get("video_title", ""),
         "video_cover": (existing or {}).get("video_cover", ""),
         "owner": owner.strip(),
-        "max_comments": max(1, min(int(max_comments or 100), 2000)),
+        "max_comments": max(1, min(int(max_comments or 500), 2000)),
         "max_videos": max(1, min(int(max_videos or 5), 50)),
         "enabled": True,
         "created_at": existing.get("created_at") if existing else _now(),
@@ -257,7 +257,7 @@ def list_monitors() -> list[dict[str, Any]]:
     return list(load_store().get("monitors", []))
 
 
-def list_leads(*, status: str = "", keyword: str = "", limit: int = 500) -> list[dict[str, Any]]:
+def list_leads(*, status: str = "", keyword: str = "", limit: int = 5000) -> list[dict[str, Any]]:
     rows = list(load_store().get("leads", []))
     if status:
         rows = [r for r in rows if str(r.get("status") or "") == status]
@@ -269,7 +269,7 @@ def list_leads(*, status: str = "", keyword: str = "", limit: int = 500) -> list
             or kw in str(r.get("commenter_nickname") or "").lower()
             or kw in str(r.get("comment_ip_location") or "").lower()
         ]
-    return rows[: max(1, min(int(limit or 500), 5000))]
+    return rows[: max(1, min(int(limit or 5000), 5000))]
 
 
 def list_leads_by_ids(lead_ids: list[str]) -> list[dict[str, Any]]:
@@ -765,7 +765,7 @@ def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: i
                 pass
 
 
-def capture_video_comments(url: str, *, max_comments: int = 100, headed: bool = True) -> CaptureResult:
+def capture_video_comments(url: str, *, max_comments: int = 500, headed: bool = True) -> CaptureResult:
     """Capture public comments from one Douyin video using an authorized browser profile."""
     source_url = extract_first_url(url)
     aweme_id = extract_aweme_id(source_url)
@@ -794,7 +794,7 @@ def capture_video_comments(url: str, *, max_comments: int = 100, headed: bool = 
     started_wall = time.time()
     last_new_wall = started_wall
     last_response_wall = 0.0
-    max_capture_seconds = min(120, max(45, 20 + int(max_comments / 12)))
+    max_capture_seconds = min(300, max(60, 30 + int(max_comments / 8)))
     reply_next_requests: dict[str, tuple[str, int]] = {}
     requested_reply_pages: set[tuple[str, int]] = set()
 
@@ -909,7 +909,7 @@ def capture_video_comments(url: str, *, max_comments: int = 100, headed: bool = 
             except Exception:
                 continue
 
-        max_scroll_attempts = min(240, max(75, int(max_comments / 4)))
+        max_scroll_attempts = min(600, max(120, int(max_comments / 3)))
         for _ in range(max_scroll_attempts):
             if len(rows) >= max_comments:
                 break
@@ -1049,7 +1049,7 @@ def resolve_profile_works(
     url: str,
     *,
     owner: str = "",
-    max_comments: int = 100,
+    max_comments: int = 500,
     max_videos: int = 5,
     force: bool = False,
 ) -> dict[str, Any]:
@@ -1132,7 +1132,7 @@ def run_selected_videos(
     if not clean_videos:
         raise ValueError("请先选择要采集评论的作品")
 
-    per_video_limit = max(1, min(int(max_comments or monitor.get("max_comments") or 100), 2000))
+    per_video_limit = max(1, min(int(max_comments or monitor.get("max_comments") or 500), 2000))
     total_captured = 0
     total_inserted = 0
     reported_total = 0
@@ -1203,7 +1203,7 @@ def run_monitor(monitor_id: str) -> dict[str, Any]:
         raise ValueError("监控对象不存在")
     if monitor.get("target_type") == "profile":
         max_videos = max(1, min(int(monitor.get("max_videos") or 5), 50))
-        max_comments = max(1, min(int(monitor.get("max_comments") or 100), 2000))
+        max_comments = max(1, min(int(monitor.get("max_comments") or 500), 2000))
         try:
             resolved = short_video.resolve_profile(str(monitor.get("target_url") or monitor.get("raw_url") or ""), recent_count=max_videos)
         except Exception as exc:  # noqa: BLE001
@@ -1267,7 +1267,7 @@ def run_monitor(monitor_id: str) -> dict[str, Any]:
         save_store(store)
         return {"ok": ok, "error": error, "captured": total_captured, "inserted": total_inserted, "total": len(store.get("leads", [])), "metadata": metadata}
 
-    result = capture_video_comments(monitor["target_url"], max_comments=int(monitor.get("max_comments") or 100))
+    result = capture_video_comments(monitor["target_url"], max_comments=int(monitor.get("max_comments") or 500))
     job = {
         "job_id": f"job_{_now()}",
         "monitor_id": monitor_id,
