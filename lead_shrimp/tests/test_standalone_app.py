@@ -213,3 +213,15 @@ def test_monitor_list_is_a_compact_avatar_grid() -> None:
     assert "class=\"monitor-avatar\"" in page
     assert 'const url=escapeHtml(m.target_url||m.raw_url||'');' not in page
     assert '作品 ${escapeHtml(m.max_videos||5)} 条' not in page
+
+
+def test_work_resolution_has_visible_progress_before_request_finishes() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="workLoading"' in page
+    assert 'id="workLoadingText"' in page
+    assert "function setWorkLoading" in page
+    assert "switchTab('worksTab');" in page
+    assert "$('resolveWorksBtn').disabled=active;" in page
