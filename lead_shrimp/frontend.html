@@ -5,58 +5,461 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>获客虾 · 评论线索工作台</title>
   <style>
-    :root{--ink:#14213b;--muted:#6f7f98;--line:#e5eaf2;--paper:#fff;--canvas:#f5f7fb;--brand:#216aff;--brand2:#03a9a2;--warning:#c97710;--danger:#c53e4b;--radius:15px;--shadow:0 14px 34px rgba(23,42,74,.07)}
-    *{box-sizing:border-box}body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--canvas);color:var(--ink);font-size:14px;min-width:980px}.shell{max-width:1520px;margin:auto;padding:22px 28px 38px}.top{display:flex;justify-content:space-between;align-items:center;gap:22px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.brand-mark{width:43px;height:43px;border-radius:14px;background:linear-gradient(145deg,#216aff,#04a9a2);display:grid;place-items:center;color:#fff;font-size:20px;font-weight:800;box-shadow:0 10px 22px rgba(33,106,255,.22)}.brand h1{font-size:20px;margin:0;letter-spacing:.02em}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}.status{display:flex;align-items:center;gap:10px}.dot{width:8px;height:8px;border-radius:50%;background:#f1b92c;box-shadow:0 0 0 5px #fff4d9}.dot.ok{background:#17b26a;box-shadow:0 0 0 5px #e5f8ef}.badge{border:1px solid #dce5f4;border-radius:999px;background:#fff;padding:8px 11px;font-size:12px;color:#516078}.btn{border:0;border-radius:9px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;background:var(--brand);color:white;transition:.16s ease}.btn:hover{filter:brightness(.95);transform:translateY(-1px)}.btn.secondary{border:1px solid #d9e2ef;background:#fff;color:#385170}.btn.plain{background:transparent;color:var(--brand);padding:6px}.btn.warn{background:#e68a18}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.grid{display:grid;grid-template-columns:minmax(330px,390px) minmax(0,1fr);gap:16px}.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.sidebar{display:grid;gap:16px;align-content:start}.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #edf0f6}.card-head h2{font-size:15px;margin:0}.card-head span{font-size:12px;color:var(--muted)}.card-body{padding:16px 18px}.field{display:grid;gap:7px;margin-bottom:13px}.field label{color:#4c5e79;font-weight:700;font-size:12px}.field input,.field textarea,.field select{border:1px solid #dce4ef;border-radius:9px;padding:10px 11px;font:inherit;color:var(--ink);outline:0;background:#fff}.field input:focus,.field textarea:focus{border-color:#7facff;box-shadow:0 0 0 3px #edf3ff}.field textarea{resize:vertical;min-height:90px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hint{font-size:12px;color:var(--muted);line-height:1.55}.login-state{padding:11px;border-radius:10px;background:#f7faff;border:1px solid #e6effe;display:flex;align-items:center;gap:8px;line-height:1.4}.login-state b{font-size:13px}.monitors{display:grid;gap:9px;max-height:310px;overflow:auto}.monitor{border:1px solid #e6ebf3;border-radius:10px;padding:11px;background:#fcfdff;display:grid;gap:7px}.monitor strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.monitor .meta{font-size:12px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap}.content{min-width:0}.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.metric{background:linear-gradient(135deg,#fff,#f9fbff);border:1px solid var(--line);border-radius:12px;padding:15px}.metric label{display:block;font-size:12px;color:var(--muted)}.metric b{font-size:25px;line-height:1.35}.workspace{display:grid;gap:16px}.job{padding:13px 16px;background:#112744;border-radius:13px;color:#edf5ff;display:flex;justify-content:space-between;gap:16px;align-items:center}.job small{display:block;opacity:.68;margin-top:4px}.job b{color:#8de5d5}.lead-toolbar{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.lead-toolbar input{border:1px solid #dce4ef;border-radius:8px;padding:9px 10px;min-width:220px;margin-left:auto}.table-wrap{overflow:auto;max-height:590px}table{width:100%;border-collapse:collapse;min-width:870px}th{position:sticky;top:0;background:#fafcff;z-index:1;text-align:left;font-size:12px;color:#77869e;padding:12px 15px;border-bottom:1px solid var(--line)}td{padding:13px 15px;border-bottom:1px solid #eff2f6;vertical-align:top}.person{font-weight:700}.comment{max-width:450px;line-height:1.55;white-space:pre-wrap}.tag{display:inline-block;border-radius:999px;padding:3px 8px;background:#edf3ff;color:#386fd4;font-size:12px}.empty{padding:52px 20px;text-align:center;color:var(--muted)}.toast{position:fixed;right:24px;bottom:24px;padding:12px 15px;border-radius:10px;background:#192e4a;color:#fff;box-shadow:0 12px 28px rgba(16,34,58,.25);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:none}.toast.error{background:#a63240}.modal{position:fixed;inset:0;background:rgba(14,29,52,.43);display:none;place-items:center;padding:22px;z-index:10}.modal.show{display:grid}.dialog{width:min(470px,100%);background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(13,28,52,.25);padding:24px}.dialog h2{margin:0 0 7px;font-size:20px}.dialog p{color:var(--muted);line-height:1.6;margin:0 0 18px}.dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.quiet{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.55}
-    @media(max-width:1120px){body{min-width:0}.shell{padding:16px}.grid{grid-template-columns:1fr}.sidebar{grid-template-columns:1fr 1fr}.overview{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.top,.lead-toolbar{align-items:flex-start;flex-direction:column}.sidebar{grid-template-columns:1fr}.row{grid-template-columns:1fr}.overview{grid-template-columns:1fr}.lead-toolbar input{margin-left:0;width:100%}}
-  </style>
-  <style>
-    .job{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 16px}
-    .diagnosis{grid-column:1/-1;border-top:1px solid rgba(208,228,255,.18);padding-top:11px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
-    .diagnosis b{color:#fff}.diagnosis .diag-copy{color:#bdd0e9}.diagnosis .diag-check{color:#8de5d5}.diagnosis .diag-check.warn{color:#ffc76a}
-    .diagnosis .diag-action{margin-left:auto;padding:7px 10px;border-radius:7px;border:1px solid rgba(145,205,255,.42);background:rgba(66,143,255,.2);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+    :root{
+      --ink:#12213a;--muted:#6d7c93;--soft:#8a97aa;--line:#e2e9f3;--paper:#fff;--canvas:#f3f6fb;
+      --brand:#2563eb;--brand-strong:#1748b9;--brand-soft:#eaf1ff;--green:#16a36a;--green-soft:#e8f8f0;
+      --amber:#d98a11;--amber-soft:#fff6dd;--red:#c83d4d;--red-soft:#fff0f2;--dark:#10233f;
+      --radius:14px;--shadow:0 16px 40px rgba(24,39,75,.08)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--canvas);color:var(--ink);font-size:14px}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:1460px;margin:0 auto;padding:22px 26px 34px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .mark{width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,#2563eb,#09a7a1);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:0 12px 26px rgba(37,99,235,.24)}
+    h1,h2,h3,p{margin:0}
+    .brand h1{font-size:22px;letter-spacing:.01em}
+    .brand p{margin-top:3px;color:var(--muted);font-size:13px}
+    .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;color:#43536c;font-size:13px;white-space:nowrap}
+    .signal{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 5px var(--amber-soft)}
+    .signal.ok{background:var(--green);box-shadow:0 0 0 5px var(--green-soft)}
+    .btn{border:0;border-radius:10px;background:var(--brand);color:#fff;padding:10px 14px;font-weight:800;min-height:40px;transition:.16s ease}
+    .btn:hover{background:var(--brand-strong);transform:translateY(-1px)}
+    .btn.secondary{background:#fff;color:#244366;border:1px solid #d6e0ee}
+    .btn.secondary:hover{background:#f8fbff}
+    .btn.ghost{background:transparent;color:var(--brand);border:1px solid transparent;padding:8px 10px}
+    .btn.warn{background:var(--amber)}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:16px;margin-bottom:16px}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .today{padding:20px;display:grid;gap:18px}
+    .today-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+    .today h2{font-size:20px;margin-bottom:6px}
+    .today p{color:var(--muted);line-height:1.55}
+    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .metric{border:1px solid #e5ebf5;background:#fbfdff;border-radius:12px;padding:14px}
+    .metric span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+    .metric b{font-size:28px;line-height:1}
+    .next-card{background:linear-gradient(135deg,#10233f,#18395f);color:#f4f8ff;border-radius:13px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .next-card b{display:block;font-size:15px;margin-bottom:4px;color:#9eeddc}
+    .next-card small{display:block;color:#c4d3e8;line-height:1.45}
+    .setup{padding:16px;display:grid;gap:12px}
+    .step{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid #e8edf5;border-radius:12px;background:#fbfdff}
+    .step-no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:900}
+    .step.done .step-no{background:var(--green-soft);color:var(--green)}
+    .step b{display:block;margin-bottom:2px}
+    .step small{color:var(--muted);line-height:1.35}
+    .main{display:grid;grid-template-columns:390px minmax(0,1fr);gap:16px;align-items:start}
+    .stack{display:grid;gap:16px}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
+    .head h2{font-size:16px}
+    .head small{color:var(--muted)}
+    .body{padding:16px 18px}
+    .field{display:grid;gap:7px;margin-bottom:13px}
+    .field label{font-size:13px;font-weight:800;color:#42536d}
+    .field input,.field textarea,.field select{width:100%;border:1px solid #d8e2ef;border-radius:10px;background:#fff;color:var(--ink);outline:0;padding:11px 12px}
+    .field textarea{resize:vertical;min-height:118px}
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:#91b5ff;box-shadow:0 0 0 4px #edf4ff}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
+    .monitor-list{display:grid;gap:10px;max-height:340px;overflow:auto}
+    .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:13px;display:grid;gap:10px}
+    .monitor-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .monitor strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .monitor .url{color:var(--muted);font-size:12px;line-height:1.45;word-break:break-all}
+    .meta{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
+    .chip.good{background:var(--green-soft);color:var(--green)}
+    .chip.warn{background:var(--amber-soft);color:#9a6108}
+    .inbox{min-width:0}
+    .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+    .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
+    .lead-list{display:grid;max-height:650px;overflow:auto}
+    .lead{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
+    .person{font-weight:900;line-height:1.35}
+    .subtle{color:var(--muted);font-size:12px;line-height:1.45}
+    .comment{line-height:1.55;white-space:pre-wrap}
+    .tag{display:inline-flex;border-radius:999px;background:#edf4ff;color:#315fc0;padding:4px 8px;font-size:12px;font-weight:700}
+    .empty{padding:44px 18px;text-align:center;color:var(--muted);line-height:1.6}
+    .diagnosis{padding:14px 18px;border-top:1px solid var(--line);display:grid;gap:10px;background:#fbfdff;border-radius:0 0 var(--radius) var(--radius)}
+    .diagnosis-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .diagnosis b{font-size:14px}
+    .diag-copy{color:var(--muted);line-height:1.45}
+    .diag-check{font-size:12px;border-radius:999px;background:var(--green-soft);color:var(--green);padding:4px 8px}
+    .diag-check.warn{background:var(--amber-soft);color:#986308}
+    .diag-action{margin-left:auto}
+    .toast{position:fixed;right:24px;bottom:24px;max-width:420px;padding:13px 15px;border-radius:12px;background:#112744;color:#fff;box-shadow:0 16px 40px rgba(16,34,58,.25);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:30}
+    .toast.show{opacity:1;transform:none}
+    .toast.error{background:#a63240}
+    .modal{position:fixed;inset:0;background:rgba(14,29,52,.48);display:none;place-items:center;padding:22px;z-index:20}
+    .modal.show{display:grid}
+    .dialog{width:min(480px,100%);background:#fff;border-radius:18px;box-shadow:0 26px 90px rgba(13,28,52,.26);padding:24px}
+    .dialog h2{font-size:21px;margin-bottom:8px}
+    .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
+    .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+    @media(max-width:1180px){.hero,.main{grid-template-columns:1fr}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:760px){.app{padding:16px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.step{grid-template-columns:30px minmax(0,1fr)}.step .btn{grid-column:1/-1}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}}
   </style>
 </head>
 <body>
-  <main class="shell">
-    <header class="top">
-      <div class="brand"><div class="brand-mark">获</div><div><h1>获客虾</h1><p>评论线索工作台 · 主页作品与视频评论采集</p></div></div>
-      <div class="status"><span id="licenseDot" class="dot"></span><span id="licenseText" class="badge">正在检查授权</span><button id="openLicense" class="btn secondary">卡密激活</button></div>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">获</div>
+        <div>
+          <h1>获客虾</h1>
+          <p>评论线索工作台 · 把评论区变成客服线索池</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="pill"><span id="licenseDot" class="signal"></span><span id="licenseText">正在检查授权</span></span>
+        <button id="openLicense" class="btn secondary">卡密激活</button>
+      </div>
     </header>
-    <section class="grid">
-      <aside class="sidebar">
-        <section class="card"><div class="card-head"><h2>抖音登录</h2><span id="loginBadge">未验证</span></div><div class="card-body"><div id="loginState" class="login-state"><span class="dot"></span><div><b>尚未获取可用登录态</b><br><span class="hint">登录仅用于建立可信 Cookie，不会作为线索账号。</span></div></div><div style="height:12px"></div><button id="loginBtn" class="btn" style="width:100%">打开抖音登录窗口</button></div></section>
-        <section class="card"><div class="card-head"><h2>添加监控对象</h2><span>先主页，后评论</span></div><form id="monitorForm" class="card-body"><div class="field"><label for="profileUrl">抖音主页或视频链接</label><textarea id="profileUrl" required placeholder="粘贴主页链接；也支持单条视频链接"></textarea></div><div class="row"><div class="field"><label for="monitorName">备注</label><input id="monitorName" placeholder="如：竞品 A"></div><div class="field"><label for="maxVideos">主页作品数</label><select id="maxVideos"><option value="5">5 条</option><option value="10">10 条</option><option value="20">20 条</option></select></div></div><div class="field"><label for="maxComments">每条作品最多评论</label><select id="maxComments"><option value="100">100 条</option><option value="300">300 条</option><option value="500">500 条</option></select></div><button class="btn" type="submit" style="width:100%">保存并开始采集</button><p class="quiet">采集公开评论；不会自动私信、关注或发布内容。重复评论按评论 ID 去重，但不同评论文本都会保留。</p></form></section>
-        <section class="card"><div class="card-head"><h2>监控列表</h2><button id="reloadMonitors" class="btn plain">刷新</button></div><div id="monitors" class="card-body monitors"><div class="empty">暂无监控对象</div></div></section>
+
+    <section class="hero">
+      <section class="panel today">
+        <div class="today-head">
+          <div>
+            <h2 id="todayTitle">今天的线索看板</h2>
+            <p id="todaySubtitle">完成登录后，添加一个抖音主页或视频，系统会把新评论整理成可跟进线索。</p>
+          </div>
+          <button id="primaryAction" class="btn">打开抖音登录</button>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>待跟进线索</span><b id="leadCount">—</b></div>
+          <div class="metric"><span>监控对象</span><b id="monitorCount">—</b></div>
+          <div class="metric"><span>登录状态</span><b id="loginMetric">—</b></div>
+        </div>
+        <div class="next-card">
+          <div id="jobSummary">
+            <b>准备就绪</b>
+            <small>添加主页后，系统将读取作品并采集所选评论。</small>
+          </div>
+          <strong id="jobCount">0 条</strong>
+        </div>
+      </section>
+
+      <section class="panel setup">
+        <article id="stepLicense" class="step">
+          <span class="step-no">1</span>
+          <div><b>激活软件</b><small id="licenseStepText">输入卡密后开放采集和导出。</small></div>
+          <button id="stepLicenseBtn" class="btn secondary">激活</button>
+        </article>
+        <article id="stepLogin" class="step">
+          <span class="step-no">2</span>
+          <div><b>登录抖音</b><small id="loginStepText">在官方窗口扫码或输入账号。</small></div>
+          <button id="stepLoginBtn" class="btn secondary">登录</button>
+        </article>
+        <article id="stepMonitor" class="step">
+          <span class="step-no">3</span>
+          <div><b>添加监控</b><small>粘贴主页或视频链接，开始收集评论线索。</small></div>
+          <button id="focusAddBtn" class="btn secondary">去添加</button>
+        </article>
+      </section>
+    </section>
+
+    <section class="main">
+      <aside class="stack">
+        <section class="panel">
+          <div class="head">
+            <h2>新增监控</h2>
+            <small>主页或单条视频</small>
+          </div>
+          <form id="monitorForm" class="body">
+            <div class="field">
+              <label for="profileUrl">抖音链接</label>
+              <textarea id="profileUrl" required placeholder="粘贴抖音主页链接，或单条视频链接"></textarea>
+            </div>
+            <div class="field">
+              <label for="monitorName">客户/竞品备注</label>
+              <input id="monitorName" placeholder="例如：昆明本地竞品A">
+            </div>
+            <div class="two">
+              <div class="field">
+                <label for="maxVideos">主页作品数</label>
+                <select id="maxVideos">
+                  <option value="5">5 条</option>
+                  <option value="10">10 条</option>
+                  <option value="20">20 条</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="maxComments">每条评论数</label>
+                <select id="maxComments">
+                  <option value="100">100 条</option>
+                  <option value="300">300 条</option>
+                  <option value="500">500 条</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn" type="submit" style="width:100%">保存并开始采集</button>
+            <p class="microcopy" style="margin-top:12px">仅采集公开评论；不会自动私信、关注或发布内容。重复评论按评论 ID 去重。</p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="head">
+            <h2>监控对象</h2>
+            <button id="reloadMonitors" class="btn ghost">刷新</button>
+          </div>
+          <div id="monitors" class="body monitor-list"><div class="empty">暂无监控对象</div></div>
+        </section>
       </aside>
-      <section class="content workspace">
-        <section class="overview"><div class="metric"><label>当前线索</label><b id="leadCount">—</b></div><div class="metric"><label>监控对象</label><b id="monitorCount">—</b></div><div class="metric"><label>登录状态</label><b id="loginMetric">—</b></div></section>
-        <section id="jobBox" class="job"><div id="jobSummary"><b>准备就绪</b><small>添加主页后，系统将读取作品并采集所选评论。</small></div><span id="jobCount">0 条</span><div id="diagnosis" class="diagnosis"><b>快速排错</b><span class="diag-copy">正在检查登录态与最近一次采集结果…</span></div></section>
-        <section class="card"><div class="card-head"><h2>评论线索</h2><span id="visibleCount">当前显示 0 条</span></div><div class="lead-toolbar"><button id="reloadLeads" class="btn secondary">刷新数据</button><button id="exportLeads" class="btn secondary">导出 CSV</button><input id="search" placeholder="搜索昵称或评论内容"></div><div class="table-wrap"><table><thead><tr><th>评论人</th><th>评论内容</th><th>意向标签</th><th>IP属地</th><th>时间</th><th>来源作品</th></tr></thead><tbody id="leadRows"><tr><td class="empty" colspan="6">暂无线索。请先完成卡密激活和抖音登录。</td></tr></tbody></table></div></section>
+
+      <section class="panel inbox">
+        <div class="head">
+          <div>
+            <h2>评论线索</h2>
+            <small id="visibleCount">当前显示 0 条</small>
+          </div>
+          <button id="exportLeads" class="btn secondary">导出 CSV</button>
+        </div>
+        <div class="toolbar">
+          <button id="reloadLeads" class="btn secondary">刷新数据</button>
+          <button id="quickLogin" class="btn secondary">检查登录</button>
+          <input id="search" class="search" placeholder="搜索昵称、评论内容、IP属地">
+        </div>
+        <div id="leadList" class="lead-list">
+          <div class="lead header">
+            <span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span>
+          </div>
+          <div class="empty">暂无线索。请先完成卡密激活和抖音登录。</div>
+        </div>
+        <div id="diagnosis" class="diagnosis">
+          <div class="diagnosis-row"><b>快速排错</b><span class="diag-copy">正在检查登录态与最近一次采集结果…</span></div>
+        </div>
       </section>
     </section>
   </main>
-  <section id="licenseModal" class="modal" aria-modal="true" role="dialog"><div class="dialog"><h2>激活获客虾</h2><p>卡密会绑定当前设备。激活后，授权文件将以系统保护方式保存在本机；卡密本身不落盘。</p><div class="field"><label for="cardKey">卡密</label><input id="cardKey" autocomplete="off" placeholder="例如 LEAD-XXXXX-XXXXX-XXXXX-XXXXX"></div><div class="dialog-foot"><button id="closeLicense" class="btn secondary">稍后再说</button><button id="activateCard" class="btn">激活并进入工作台</button></div></div></section>
+
+  <section id="licenseModal" class="modal" aria-modal="true" role="dialog">
+    <div class="dialog">
+      <h2>激活获客虾</h2>
+      <p>卡密会绑定当前设备。授权文件保存在本机；卡密本身不落盘。</p>
+      <div class="field">
+        <label for="cardKey">卡密</label>
+        <input id="cardKey" autocomplete="off" placeholder="例如 LEAD-XXXXX-XXXXX-XXXXX-XXXXX">
+      </div>
+      <div class="dialog-foot">
+        <button id="closeLicense" class="btn secondary">稍后再说</button>
+        <button id="activateCard" class="btn">激活并进入工作台</button>
+      </div>
+    </div>
+  </section>
+
   <div id="toast" class="toast"></div>
+
   <script>
-    const $=id=>document.getElementById(id);let allLeads=[];
-    function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-    function toast(message,error=false){const el=$('toast');el.textContent=message;el.className='toast show'+(error?' error':'');clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className='toast',3400)}
-    async function api(path,options={}){const res=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});const raw=await res.text();let data;try{data=raw?JSON.parse(raw):{}}catch(_){throw Error(`服务端返回了无法识别的数据（HTTP ${res.status}），请重试；若持续出现请联系技术支持。`)}if(!res.ok){if(res.status===403)$('licenseModal').classList.add('show');throw Error(data.detail||`操作失败（HTTP ${res.status}）`)}return data}
-    function renderLicense(data){const ok=Boolean(data.licensed);$('licenseDot').className='dot '+(ok?'ok':'');$('licenseText').textContent=ok?'已激活 · '+(data.mode==='grace'?'请联网刷新':'权益有效'):'未激活';$('openLicense').textContent=ok?'刷新权益':'卡密激活';if(!ok)$('licenseModal').classList.add('show')}
-    async function loadLicense(){try{renderLicense(await api('/api/license/status'))}catch(e){toast(e.message,true)}}
-    async function loadLogin(){try{const d=await api('/api/comment-leads/status');const ok=Boolean(d.logged_in);$('loginBadge').textContent=ok?'已验证':'未验证';$('loginMetric').textContent=ok?'已登录':'未登录';$('loginState').innerHTML=`<span class="dot ${ok?'ok':''}"></span><div><b>${ok?'登录态可用':'尚未获取可用登录态'}</b><br><span class="hint">${ok?'评论与主页读取将复用该可信 Cookie。':'请在打开的官方页面中扫码或输入账号登录。'}</span></div>`}catch(e){toast(e.message,true)}}
-    function renderMonitors(rows){$('monitorCount').textContent=rows.length;$('monitors').innerHTML=rows.length?rows.map(m=>`<article class="monitor"><strong>${escapeHtml(m.title||m.author_name||'待识别账号')}</strong><span class="hint">${escapeHtml(m.target_url||m.raw_url||'')}</span><div class="meta"><span>作品 ${escapeHtml(m.max_videos||5)} 条</span><span>上次新增 ${escapeHtml(m.last_count||0)} 条</span></div><button class="btn secondary" data-run="${escapeHtml(m.id)}">立即采集</button></article>`).join(''):'<div class="empty">暂无监控对象</div>';document.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runMonitor(b.dataset.run))}
-    async function loadMonitors(){try{const d=await api('/api/comment-leads/monitors');renderMonitors(d.monitors||[])}catch(e){toast(e.message,true)}}
-    function renderLeads(){const term=$('search').value.trim().toLowerCase();const rows=allLeads.filter(x=>!term||[x.commenter_nickname,x.content,x.comment_ip_location].join(' ').toLowerCase().includes(term));$('leadCount').textContent=allLeads.length;$('visibleCount').textContent='当前显示 '+rows.length+' 条';$('leadRows').innerHTML=rows.length?rows.map(x=>`<tr><td><div class="person">${escapeHtml(x.commenter_nickname||'抖音用户')}</div><small>${escapeHtml(x.commenter_signature||'')}</small></td><td class="comment">${escapeHtml(x.content||'')}</td><td><span class="tag">${escapeHtml(x.ai_label||x.status||'待跟进')}</span></td><td>${escapeHtml(x.comment_ip_location||'IP未知')}</td><td>${escapeHtml(x.create_time||'')}</td><td><small>${escapeHtml(x.aweme_id||'')}</small></td></tr>`).join(''):'<tr><td class="empty" colspan="6">没有匹配的线索</td></tr>'}
-    async function loadLeads(){try{const d=await api('/api/comment-leads/leads');allLeads=d.leads||[];renderLeads()}catch(e){toast(e.message,true)}}
-    function setJob(title,detail,count){$('jobSummary').innerHTML=`<b>${escapeHtml(title)}</b><small>${escapeHtml(detail)}</small>`;$('jobCount').textContent=count}
-    function renderDiagnosis(d){const checks=(d.checks||[]).map(x=>`<span class="diag-check ${x.ok?'':'warn'}">${x.ok?'✓':'!'} ${escapeHtml(x.label)}：${escapeHtml(x.detail)}</span>`).join('');$('diagnosis').innerHTML=`<b>快速排错</b><span class="diag-copy">${escapeHtml(d.title||'正在检查')} · ${escapeHtml(d.detail||'')}</span>${checks}${d.next_action?`<button class="diag-action" data-diagnosis-action="${escapeHtml(d.next_action)}">${escapeHtml(d.action_label||'处理')}</button>`:''}`;const action=document.querySelector('[data-diagnosis-action]');if(action)action.onclick=()=>{if(action.dataset.diagnosisAction==='login')openLogin();else if(action.dataset.diagnosisAction==='retry'){const first=document.querySelector('[data-run]');if(first)runMonitor(first.dataset.run)}}}
-    async function loadDiagnosis(id=''){try{renderDiagnosis(await api('/api/comment-leads/diagnosis'+(id?'?monitor_id='+encodeURIComponent(id):'')))}catch(e){$('diagnosis').innerHTML='<b>快速排错</b><span class="diag-copy">'+escapeHtml(e.message)+'</span>'}}
-    async function runMonitor(id){setJob('正在采集','浏览器正在读取公开评论，请勿关闭弹出的抖音页面。','进行中');try{const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:id})});const partial=Boolean(d.error);setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成',false);await Promise.all([loadLeads(),loadMonitors(),loadDiagnosis(id)])}catch(e){setJob('采集未完成',e.message,'请重试');toast(e.message,true);await loadDiagnosis(id)}}
-    $('monitorForm').onsubmit=async e=>{e.preventDefault();const payload={url:$('profileUrl').value,title:$('monitorName').value,max_videos:Number($('maxVideos').value),max_comments:Number($('maxComments').value)};try{const d=await api('/api/comment-leads/monitors',{method:'POST',body:JSON.stringify(payload)});toast('已保存监控对象，开始采集');await runMonitor(d.monitor.id);$('profileUrl').value='';$('monitorName').value=''}catch(err){toast(err.message,true)}};
-    async function openLogin(){try{toast('已打开登录窗口，请完成登录后回到这里。');const d=await api('/api/comment-leads/login',{method:'POST',body:'{}'});if(d.ok)toast('登录态已验证');await Promise.all([loadLogin(),loadDiagnosis()])}catch(e){toast(e.message,true)}}
-    $('loginBtn').onclick=openLogin;
-    $('activateCard').onclick=async()=>{try{const d=await api('/api/license/activate',{method:'POST',body:JSON.stringify({card_key:$('cardKey').value})});renderLicense(d);$('licenseModal').classList.remove('show');toast('激活成功');await Promise.all([loadMonitors(),loadLeads(),loadDiagnosis()])}catch(e){toast(e.message,true)}};$('openLicense').onclick=async()=>{try{const s=await api('/api/license/status');if(s.licensed){const d=await api('/api/license/refresh',{method:'POST',body:'{}'});renderLicense(d);toast('权益已刷新')}else $('licenseModal').classList.add('show')}catch(e){toast(e.message,true)}};$('closeLicense').onclick=()=>$('licenseModal').classList.remove('show');$('reloadMonitors').onclick=loadMonitors;$('reloadLeads').onclick=loadLeads;$('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';$('search').oninput=renderLeads;Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
+    const $ = id => document.getElementById(id);
+    let allLeads = [];
+    let state = { licensed:false, loggedIn:false, monitors:[] };
+
+    function escapeHtml(value){
+      return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+    function toast(message,error=false){
+      const el=$('toast');
+      el.textContent=message;
+      el.className='toast show'+(error?' error':'');
+      clearTimeout(window.__toast);
+      window.__toast=setTimeout(()=>el.className='toast',3400);
+    }
+    async function api(path,options={}){
+      const res=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
+      const raw=await res.text();
+      let data;
+      try{data=raw?JSON.parse(raw):{}}
+      catch(_){throw Error(`服务端返回了无法识别的数据（HTTP ${res.status}），请重试；若持续出现请联系技术支持。`)}
+      if(!res.ok){
+        if(res.status===403)$('licenseModal').classList.add('show');
+        throw Error(data.detail||`操作失败（HTTP ${res.status}）`);
+      }
+      return data;
+    }
+    function updatePrimaryAction(){
+      if(!state.licensed){
+        $('primaryAction').textContent='先激活卡密';
+        $('primaryAction').onclick=()=>$('licenseModal').classList.add('show');
+      }else if(!state.loggedIn){
+        $('primaryAction').textContent='打开抖音登录';
+        $('primaryAction').onclick=openLogin;
+      }else{
+        $('primaryAction').textContent='添加监控对象';
+        $('primaryAction').onclick=()=>$('profileUrl').focus();
+      }
+      $('stepLicense').classList.toggle('done',state.licensed);
+      $('stepLogin').classList.toggle('done',state.loggedIn);
+      $('stepMonitor').classList.toggle('done',(state.monitors||[]).length>0);
+      $('licenseStepText').textContent=state.licensed?'权益已生效。':'输入卡密后开放采集和导出。';
+      $('loginStepText').textContent=state.loggedIn?'登录态可用。':'在官方窗口扫码或输入账号。';
+    }
+    function renderLicense(data){
+      const ok=Boolean(data.licensed);
+      state.licensed=ok;
+      $('licenseDot').className='signal '+(ok?'ok':'');
+      $('licenseText').textContent=ok?'已激活':'未激活';
+      $('openLicense').textContent=ok?'刷新权益':'卡密激活';
+      if(!ok)$('licenseModal').classList.add('show');
+      updatePrimaryAction();
+    }
+    async function loadLicense(){
+      try{renderLicense(await api('/api/license/status'))}
+      catch(e){toast(e.message,true)}
+    }
+    async function loadLogin(){
+      try{
+        const d=await api('/api/comment-leads/status');
+        const ok=Boolean(d.logged_in);
+        state.loggedIn=ok;
+        $('loginMetric').textContent=ok?'已登录':'未登录';
+        updatePrimaryAction();
+      }catch(e){toast(e.message,true)}
+    }
+    function renderMonitors(rows){
+      state.monitors=rows;
+      $('monitorCount').textContent=rows.length;
+      $('monitors').innerHTML=rows.length?rows.map(m=>{
+        const title=escapeHtml(m.title||m.author_name||'待识别账号');
+        const url=escapeHtml(m.target_url||m.raw_url||'');
+        const last=Number(m.last_count||0);
+        const err=String(m.last_error||'').trim();
+        return `<article class="monitor">
+          <div class="monitor-title"><strong>${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
+          <div class="url">${url}</div>
+          <div class="meta"><span class="chip">作品 ${escapeHtml(m.max_videos||5)} 条</span><span class="chip">新增 ${last} 条</span></div>
+          <button class="btn secondary" data-run="${escapeHtml(m.id)}">立即采集</button>
+        </article>`;
+      }).join(''):'<div class="empty">暂无监控对象。粘贴一个抖音主页或视频链接即可开始。</div>';
+      document.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>runMonitor(b.dataset.run));
+      updatePrimaryAction();
+    }
+    async function loadMonitors(){
+      try{const d=await api('/api/comment-leads/monitors');renderMonitors(d.monitors||[])}
+      catch(e){toast(e.message,true)}
+    }
+    function formatTime(value){
+      const text=String(value||'');
+      if(/^\d{10}$/.test(text)){
+        try{return new Date(Number(text)*1000).toLocaleDateString('zh-CN')}
+        catch(_){return text}
+      }
+      return text;
+    }
+    function renderLeads(){
+      const term=$('search').value.trim().toLowerCase();
+      const rows=allLeads.filter(x=>!term||[x.commenter_nickname,x.content,x.comment_ip_location,x.ai_label,x.status].join(' ').toLowerCase().includes(term));
+      $('leadCount').textContent=allLeads.length;
+      $('visibleCount').textContent='当前显示 '+rows.length+' 条';
+      const header='<div class="lead header"><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
+      if(!rows.length){
+        $('leadList').innerHTML=header+'<div class="empty">没有匹配的线索。换个关键词，或添加新的监控对象。</div>';
+        return;
+      }
+      $('leadList').innerHTML=header+rows.map(x=>`<article class="lead">
+        <div><div class="person">${escapeHtml(x.commenter_nickname||'抖音用户')}</div><div class="subtle">${escapeHtml(x.commenter_signature||x.commenter_unique_id||'')}</div></div>
+        <div class="comment">${escapeHtml(x.content||'')}</div>
+        <div><span class="tag">${escapeHtml(x.ai_label||x.status||'待跟进')}</span></div>
+        <div>${escapeHtml(x.comment_ip_location||'未知')}</div>
+        <div class="subtle">${escapeHtml(formatTime(x.create_time))}</div>
+        <div class="action-col">${x.commenter_profile_url?`<button class="btn secondary" data-profile="${escapeHtml(x.commenter_profile_url)}">打开主页</button>`:'<span class="subtle">无主页</span>'}</div>
+      </article>`).join('');
+      document.querySelectorAll('[data-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.profile,'_blank','noopener'));
+    }
+    async function loadLeads(){
+      try{const d=await api('/api/comment-leads/leads');allLeads=d.leads||[];renderLeads()}
+      catch(e){toast(e.message,true)}
+    }
+    function setJob(title,detail,count){
+      $('jobSummary').innerHTML=`<b>${escapeHtml(title)}</b><small>${escapeHtml(detail)}</small>`;
+      $('jobCount').textContent=count;
+      $('todayTitle').textContent=title;
+      $('todaySubtitle').textContent=detail;
+    }
+    function renderDiagnosis(d){
+      const checks=(d.checks||[]).map(x=>`<span class="diag-check ${x.ok?'':'warn'}">${x.ok?'✓':'!'} ${escapeHtml(x.label)}：${escapeHtml(x.detail)}</span>`).join('');
+      $('diagnosis').innerHTML=`<div class="diagnosis-row"><b>快速排错</b><span class="diag-copy">${escapeHtml(d.title||'正在检查')} · ${escapeHtml(d.detail||'')}</span>${d.next_action?`<button class="btn secondary diag-action" data-diagnosis-action="${escapeHtml(d.next_action)}">${escapeHtml(d.action_label||'处理')}</button>`:''}</div><div class="diagnosis-row">${checks}</div>`;
+      const action=document.querySelector('[data-diagnosis-action]');
+      if(action)action.onclick=()=>{
+        if(action.dataset.diagnosisAction==='login')openLogin();
+        else if(action.dataset.diagnosisAction==='retry'){
+          const first=document.querySelector('[data-run]');
+          if(first)runMonitor(first.dataset.run);
+        }else if(action.dataset.diagnosisAction==='monitor')$('profileUrl').focus();
+      };
+    }
+    async function loadDiagnosis(id=''){
+      try{renderDiagnosis(await api('/api/comment-leads/diagnosis'+(id?'?monitor_id='+encodeURIComponent(id):'')))}
+      catch(e){$('diagnosis').innerHTML='<div class="diagnosis-row"><b>快速排错</b><span class="diag-copy">'+escapeHtml(e.message)+'</span></div>'}
+    }
+    async function runMonitor(id){
+      setJob('正在采集','浏览器正在读取公开评论，请勿关闭弹出的抖音页面。','进行中');
+      try{
+        const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:id})});
+        const partial=Boolean(d.error);
+        setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);
+        toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成');
+        await Promise.all([loadLeads(),loadMonitors(),loadDiagnosis(id)]);
+      }catch(e){
+        setJob('采集未完成',e.message,'请重试');
+        toast(e.message,true);
+        await loadDiagnosis(id);
+      }
+    }
+    async function openLogin(){
+      try{
+        toast('已打开登录窗口，请完成登录后回到这里。');
+        const d=await api('/api/comment-leads/login',{method:'POST',body:'{}'});
+        if(d.ok)toast('登录态已验证');
+        await Promise.all([loadLogin(),loadDiagnosis()]);
+      }catch(e){toast(e.message,true)}
+    }
+
+    $('monitorForm').onsubmit=async e=>{
+      e.preventDefault();
+      const payload={url:$('profileUrl').value,title:$('monitorName').value,max_videos:Number($('maxVideos').value),max_comments:Number($('maxComments').value)};
+      try{
+        const d=await api('/api/comment-leads/monitors',{method:'POST',body:JSON.stringify(payload)});
+        toast('已保存监控对象，开始采集');
+        await runMonitor(d.monitor.id);
+        $('profileUrl').value='';
+        $('monitorName').value='';
+      }catch(err){toast(err.message,true)}
+    };
+    $('activateCard').onclick=async()=>{
+      try{
+        const d=await api('/api/license/activate',{method:'POST',body:JSON.stringify({card_key:$('cardKey').value})});
+        renderLicense(d);
+        $('licenseModal').classList.remove('show');
+        toast('激活成功');
+        await Promise.all([loadMonitors(),loadLeads(),loadDiagnosis()]);
+      }catch(e){toast(e.message,true)}
+    };
+    $('openLicense').onclick=async()=>{
+      try{
+        const s=await api('/api/license/status');
+        if(s.licensed){
+          const d=await api('/api/license/refresh',{method:'POST',body:'{}'});
+          renderLicense(d);
+          toast('权益已刷新');
+        }else $('licenseModal').classList.add('show');
+      }catch(e){toast(e.message,true)}
+    };
+    $('closeLicense').onclick=()=>$('licenseModal').classList.remove('show');
+    $('stepLicenseBtn').onclick=()=>$('licenseModal').classList.add('show');
+    $('stepLoginBtn').onclick=openLogin;
+    $('quickLogin').onclick=openLogin;
+    $('focusAddBtn').onclick=()=>$('profileUrl').focus();
+    $('reloadMonitors').onclick=loadMonitors;
+    $('reloadLeads').onclick=loadLeads;
+    $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
+    $('search').oninput=renderLeads;
+
+    Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
   </script>
 </body>
 </html>
