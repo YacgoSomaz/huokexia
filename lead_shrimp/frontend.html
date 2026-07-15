@@ -266,6 +266,15 @@
                 </select>
               </label>
               <label for="includePinnedWorks"><input id="includePinnedWorks" type="checkbox"> 显示置顶作品</label>
+              <label for="workCommentLimit">每条作品抓取
+                <select id="workCommentLimit">
+                  <option value="100">100 条评论</option>
+                  <option value="300">300 条评论</option>
+                  <option value="500" selected>500 条评论</option>
+                  <option value="1000">1000 条评论</option>
+                  <option value="2000">2000 条评论</option>
+                </select>
+              </label>
             </div>
             <div id="workList" class="work-list"><div class="empty">请先在“新增监控”里解析主页作品。</div></div>
           </div>
@@ -638,9 +647,10 @@
       const selected=Array.from(document.querySelectorAll('[data-work-index]:checked')).map(input=>state.pendingVideos[Number(input.dataset.workIndex)]).filter(Boolean);
       if(!monitor.id){toast('请先解析主页作品',true);return}
       if(!selected.length){toast('请至少选择一个作品',true);return}
-      setJob('正在采集评论',`已选择 ${selected.length} 条作品，正在读取公开评论。`,'进行中');
+      const commentLimit=Number($('workCommentLimit').value||500);
+      setJob('正在采集评论',`已选择 ${selected.length} 条作品，每条最多 ${commentLimit} 条评论。`,'进行中');
       try{
-        const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:monitor.id,videos:selected,max_comments:Number($('maxComments').value)})});
+        const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:monitor.id,videos:selected,max_comments:commentLimit})});
         const partial=Boolean(d.error);
         setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);
         toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成');
