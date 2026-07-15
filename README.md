@@ -2,15 +2,15 @@
 
 获客虾是一个独立的本地桌面 Web 应用：在用户自己完成抖音登录后，采集主页或视频评论，保留评论原文与话术线索，进行筛选并导出 CSV。它从直播复盘项目中拆出，**不包含**直播录制、AI 复盘、直播工作台或短视频 AI 页面。
 
-> 仓库名为 `Alhook`，对用户展示的产品名为“获客虾（LeadShrimp）”。
+> GitHub 仓库名为 `AIhook`，本地目录/历史代号可能仍显示为 `Alhook`；对用户展示的产品名为“获客虾（LeadShrimp）”。
 
 ## 快速启动（开发版）
 
 要求：Windows、Python 3.11+、Microsoft Edge，以及可访问抖音的网络环境。
 
 ```powershell
-git clone https://github.com/YacgoSomaz/Alhook.git
-cd Alhook
+git clone https://github.com/YacgoSomaz/AIhook.git
+cd AIhook
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt

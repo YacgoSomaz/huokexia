@@ -1,7 +1,7 @@
 # 获客虾（Alhook）项目交接报告
 
 更新时间：2026-07-15
-项目仓库：`YacgoSomaz/Alhook`（私有）
+项目仓库：`YacgoSomaz/AIhook`（私有）
 产品名：获客虾 / LeadShrimp
 主分支：`main`
 
