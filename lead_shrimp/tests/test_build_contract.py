@@ -45,3 +45,11 @@ def test_public_build_is_unlocked_and_still_compiles_a_standalone_app() -> None:
     assert "check_release.py" in script
     assert "--commercial" not in script
     assert "LICENSE_ADMIN_TOKEN" not in script
+
+
+def test_public_installer_runs_the_bundled_python_runtime() -> None:
+    installer = (ROOT / "build" / "lead_shrimp_public.iss").read_text(encoding="utf-8")
+
+    assert "python\\pythonw.exe" in installer
+    assert "-m lead_shrimp.launcher" in installer
+    assert "StagingDir" in installer
