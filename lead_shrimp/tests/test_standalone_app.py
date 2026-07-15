@@ -346,6 +346,18 @@ def test_background_capture_does_not_change_login_window_launch() -> None:
     assert "--window-position=-32000,-32000" in source
 
 
+def test_lead_list_supports_drag_selection_and_date_range_selection() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="leadStartDate"' in page
+    assert 'id="leadEndDate"' in page
+    assert 'id="dragSelectLeads"' in page
+    assert "pointerenter" in page
+    assert "selectLeadsByDate" in page
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
