@@ -203,6 +203,15 @@ def test_profile_metadata_retries_captured_post_endpoint() -> None:
     assert "dom_fallback_videos" in source
 
 
+def test_profile_post_endpoint_retries_are_bounded() -> None:
+    from pipeline.short_video import _render_profile_events_locked
+
+    source = __import__("inspect").getsource(_render_profile_events_locked)
+
+    assert "post_api_attempts" in source
+    assert "post_api_attempts[api_url]" in source
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
