@@ -142,7 +142,7 @@ def test_frontend_uses_a_compact_workbench_and_visible_controls() -> None:
 
     page = frontend_path().read_text(encoding="utf-8")
 
-    assert ".app{max-width:1280px" in page
+    assert ".app{max-width:none" in page
     assert ".tabs{width:184px" in page
     assert ".tab-btn{border:1px solid #d8e2ef;background:#fff" in page
     assert ".tab-btn.active{background:var(--brand)" in page
