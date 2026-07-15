@@ -929,6 +929,7 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
         post_api_urls: list[str] = []
         processed_post_api_urls: set[str] = set()
         post_api_attempts: dict[str, int] = {}
+        profile_api_request_count = 0
 
         def ingest_profile_api(data: Any, url: str) -> None:
             if not isinstance(data, dict):
@@ -962,14 +963,16 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
                 pass
 
         def fetch_profile_api(api_url: str) -> None:
+            nonlocal profile_api_request_count
             if api_url in processed_post_api_urls:
                 return
             attempts = post_api_attempts.get(api_url, 0)
-            if attempts >= 2:
+            if attempts >= 2 or profile_api_request_count >= 4:
                 return
             post_api_attempts[api_url] = attempts + 1
+            profile_api_request_count += 1
             try:
-                response = page.request.get(api_url, timeout=8000)
+                response = page.request.get(api_url, timeout=4000)
                 ingest_profile_api(response.json(), api_url)
                 processed_post_api_urls.add(api_url)
             except Exception:  # noqa: BLE001 - response events may already contain the data.
@@ -1061,7 +1064,7 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
                     return
             if not api_videos and post_api_urls and tick in {14, 18, 24, 30}:
                 metadata_retry += 1
-                for api_url in list(post_api_urls):
+                for api_url in list(post_api_urls[-2:]):
                     fetch_profile_api(api_url)
                 if api_videos:
                     yield {
