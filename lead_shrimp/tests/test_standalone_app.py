@@ -256,6 +256,40 @@ def test_frontend_has_lead_time_filters_and_cached_work_refresh() -> None:
     assert "payload.force=true" in page
 
 
+def test_selected_lead_export_only_accepts_existing_ids(tmp_path, monkeypatch) -> None:
+    from lead_shrimp import app as app_module
+
+    export_dir = tmp_path / "exports"
+    store_path = tmp_path / "leads.json"
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_JSON", store_path)
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_EXPORT_DIR", export_dir)
+    store_path.write_text(
+        '{"version": 1, "monitors": [], "leads": ['
+        '{"lead_id":"lead-a","comment_id":"comment-a","content":"高价值"},'
+        '{"lead_id":"lead-b","comment_id":"comment-b","content":"普通"}], "jobs": []}',
+        encoding="utf-8",
+    )
+
+    response = TestClient(app_module.app).post(
+        "/api/comment-leads/export", json={"lead_ids": ["lead-a"]}
+    )
+
+    assert response.status_code == 200
+    assert "高价值" in response.content.decode("utf-8-sig")
+    assert "普通" not in response.content.decode("utf-8-sig")
+
+
+def test_frontend_supports_selective_lead_export() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="selectVisibleLeads"' in page
+    assert 'data-lead-id=' in page
+    assert "导出选中" in page
+    assert "/api/comment-leads/export" in page
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
