@@ -978,6 +978,7 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
         yielded_profile = False
         empty_reads = 0
         metadata_retry = 0
+        dom_fallback_videos: list[dict[str, Any]] = []
         # 快速轮询首屏 DOM，但不要因为短时间没有新增就过早返回。
         # 抖音作品接口经常分批返回；目标数越大，越需要给翻页和滚动更长窗口。
         max_ticks = 44 + min(60, max(0, recent_count - 20) * 3)
@@ -1049,9 +1050,10 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
                         "phase": "metadata",
                     }
             # 页面卡片只含标题和点赞，通常没有发布时间、评论数和置顶状态。
-            # 优先等待作品接口；只有接口迟迟未返回时才退回到页面卡片。
-            dom_fallback_ready = not api_videos and tick >= 14
-            for video in (_read_page_videos(page) if dom_fallback_ready else []):
+            # 先缓存页面卡片，给作品接口完整的重试窗口，避免过早结束。
+            if not api_videos and tick >= 14:
+                dom_fallback_videos = _read_page_videos(page)
+            for video in (dom_fallback_videos if not api_videos and tick >= 30 else []):
                 url_key = _video_key(video)
                 if not url_key or url_key in seen:
                     continue
