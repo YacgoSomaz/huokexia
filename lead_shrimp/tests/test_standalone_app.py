@@ -302,6 +302,16 @@ def test_comment_collection_default_is_not_limited_to_100() -> None:
     assert "max_capture_seconds = min(300" in source
 
 
+def test_work_selection_has_a_comment_count_control() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="workCommentLimit"' in page
+    assert 'option value="500" selected' in page
+    assert "$('workCommentLimit').value" in page
+
+
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
     from lead_shrimp.app import frontend_path
 
