@@ -299,6 +299,21 @@ def api_comment_leads_export() -> FileResponse:
     return FileResponse(out, media_type="text/csv", filename=out.name)
 
 
+@app.post("/api/comment-leads/export")
+def api_comment_leads_export_selected(payload: dict[str, object] = Body(...)) -> FileResponse:
+    raw_ids = payload.get("lead_ids")
+    if not isinstance(raw_ids, list):
+        raise HTTPException(status_code=400, detail="请选择要导出的线索")
+    lead_ids = [str(value or "").strip() for value in raw_ids if str(value or "").strip()]
+    if not lead_ids:
+        raise HTTPException(status_code=400, detail="请选择要导出的线索")
+    rows = comment_leads.list_leads_by_ids(lead_ids)
+    if not rows:
+        raise HTTPException(status_code=404, detail="选中的线索已不存在，请刷新数据后重试")
+    out = comment_leads.export_leads_csv(rows)
+    return FileResponse(out, media_type="text/csv", filename=out.name)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="获客虾本地控制台")
     parser.add_argument("--host", default="127.0.0.1")

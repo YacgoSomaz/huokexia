@@ -272,6 +272,15 @@ def list_leads(*, status: str = "", keyword: str = "", limit: int = 500) -> list
     return rows[: max(1, min(int(limit or 500), 5000))]
 
 
+def list_leads_by_ids(lead_ids: list[str]) -> list[dict[str, Any]]:
+    """Return only stored leads whose IDs were explicitly selected by the user."""
+    requested = {str(value or "").strip() for value in lead_ids if str(value or "").strip()}
+    if not requested:
+        return []
+    rows = list(load_store().get("leads", []))
+    return [row for row in rows if str(row.get("lead_id") or "") in requested]
+
+
 def _comment_profile_url(sec_uid: str) -> str:
     return f"https://www.douyin.com/user/{sec_uid}" if sec_uid else ""
 

@@ -105,7 +105,7 @@
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
     .lead-list{display:grid;max-height:640px;overflow:auto}
-    .lead{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead{display:grid;grid-template-columns:30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
     .person{font-weight:900;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .subtle{color:var(--muted);font-size:12px;line-height:1.45}
@@ -128,7 +128,7 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
     @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
@@ -276,7 +276,7 @@
             <h2>评论线索</h2>
             <small id="visibleCount">当前显示 0 条</small>
           </div>
-          <button id="exportLeads" class="btn secondary">导出 CSV</button>
+          <button id="exportLeads" class="btn secondary">导出选中（0）</button>
         </div>
         <div class="toolbar">
           <button id="reloadLeads" class="btn secondary">刷新数据</button>
@@ -294,7 +294,7 @@
         </div>
         <div id="leadList" class="lead-list">
           <div class="lead header">
-            <span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span>
+            <span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span>
           </div>
           <div class="empty">暂无线索。请先完成卡密激活和抖音登录。</div>
         </div>
@@ -337,6 +337,7 @@
     const $ = id => document.getElementById(id);
     const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
+    const selectedLeadIds = new Set();
     let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[] };
 
     function escapeHtml(value){
@@ -551,12 +552,14 @@
       });
       $('leadCount').textContent=allLeads.length;
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
-      const header='<div class="lead header"><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
+      const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
       if(!rows.length){
         $('leadList').innerHTML=header+'<div class="empty">没有匹配的线索。换个关键词，或添加新的监控对象。</div>';
+        bindLeadSelection([]);
         return;
       }
       $('leadList').innerHTML=header+rows.map(x=>`<article class="lead">
+        <div><input type="checkbox" data-lead-id="${escapeHtml(x.lead_id||'')}"${selectedLeadIds.has(String(x.lead_id||''))?' checked':''} aria-label="选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></div>
         <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
         <div><span class="tag">${escapeHtml(x.ai_label||x.status||'待跟进')}</span></div>
@@ -565,6 +568,28 @@
         <div class="action-col">${x.commenter_profile_url?`<button class="btn secondary" data-profile="${escapeHtml(x.commenter_profile_url)}">打开主页</button>`:'<span class="subtle">无主页</span>'}</div>
       </article>`).join('');
       document.querySelectorAll('[data-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.profile,'_blank','noopener'));
+      bindLeadSelection(rows);
+    }
+    function updateExportButton(){
+      $('exportLeads').textContent=`导出选中（${selectedLeadIds.size}）`;
+    }
+    function bindLeadSelection(rows){
+      document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
+        const id=String(input.dataset.leadId||'');
+        if(input.checked)selectedLeadIds.add(id);else selectedLeadIds.delete(id);
+        updateExportButton();
+        const master=$('selectVisibleLeads');
+        if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
+      });
+      const master=$('selectVisibleLeads');
+      if(master)master.onchange=()=>{
+        rows.forEach(row=>{
+          const id=String(row.lead_id||'');
+          if(master.checked)selectedLeadIds.add(id);else selectedLeadIds.delete(id);
+        });
+        renderLeads();
+      };
+      updateExportButton();
     }
     async function loadLeads(){
       try{const d=await api('/api/comment-leads/leads');allLeads=d.leads||[];renderLeads()}
@@ -674,7 +699,18 @@
     $('collectSelectedWorks').onclick=runSelectedWorks;
     $('workAgeFilter').onchange=renderWorkList;
     $('includePinnedWorks').onchange=renderWorkList;
-    $('exportLeads').onclick=()=>window.location.href='/api/comment-leads/export';
+    $('exportLeads').onclick=async()=>{
+      if(!selectedLeadIds.size){toast('请先选择要导出的高价值客户',true);return}
+      try{
+        const response=await fetch('/api/comment-leads/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lead_ids:Array.from(selectedLeadIds)})});
+        if(!response.ok){let detail='导出失败';try{detail=(await response.json()).detail||detail}catch(_){}throw new Error(detail)}
+        const blob=await response.blob();
+        const link=document.createElement('a');
+        link.href=URL.createObjectURL(blob);link.download='高价值客户.csv';link.click();
+        setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+        toast(`已导出 ${selectedLeadIds.size} 条高价值客户`);
+      }catch(e){toast(e.message,true)}
+    };
     $('search').oninput=renderLeads;
     $('leadAgeFilter').onchange=renderLeads;
     $('leadSort').onchange=renderLeads;
