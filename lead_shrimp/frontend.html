@@ -248,9 +248,9 @@
               <label for="workAgeFilter">发布时间
                 <select id="workAgeFilter">
                   <option value="7">近 7 天</option>
-                  <option value="30" selected>近 30 天</option>
+                  <option value="30">近 30 天</option>
                   <option value="90">近 90 天</option>
-                  <option value="0">全部作品</option>
+                  <option value="0" selected>全部作品</option>
                 </select>
               </label>
               <label for="includePinnedWorks"><input id="includePinnedWorks" type="checkbox"> 显示置顶作品</label>
@@ -448,7 +448,8 @@
         const stamp=videoTimestamp(v.publish_time||v.create_time);
         return (includePinned||!v.pinned)&&(!days||Boolean(stamp)&&stamp>=cutoff);
       });
-      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。默认仅勾选近 30 天非置顶作品。`;
+      const hiddenPinned=state.pendingVideos.filter(v=>v.pinned&&!includePinned).length;
+      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。${hiddenPinned?`已隐藏 ${hiddenPinned} 条置顶作品。`: '置顶作品已展示并标记，默认不勾选。'}`;
       $('workList').innerHTML=visible.length?visible.map(({v,index})=>`<label class="work">
         <input type="checkbox" data-work-index="${index}" ${v.selected===true?'checked':''}${v.selected===false?'':defaultWorkSelected(v)?' checked':''}>
         <img src="${escapeHtml(v.cover_url||'')}" alt="">
@@ -466,8 +467,8 @@
     function renderWorks(monitor,videos){
       state.pendingMonitor=monitor;
       state.pendingVideos=videos||[];
-      $('workAgeFilter').value=String(DEFAULT_WORK_WINDOW_DAYS);
-      $('includePinnedWorks').checked=false;
+      $('workAgeFilter').value='0';
+      $('includePinnedWorks').checked=true;
       renderWorkList();
     }
     async function resolveWorks(payload){

@@ -977,6 +977,7 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
         fetched_cursors: set[str] = set()
         yielded_profile = False
         empty_reads = 0
+        metadata_retry = 0
         # 快速轮询首屏 DOM，但不要因为短时间没有新增就过早返回。
         # 抖音作品接口经常分批返回；目标数越大，越需要给翻页和滚动更长窗口。
         max_ticks = 44 + min(60, max(0, recent_count - 20) * 3)
@@ -1032,6 +1033,21 @@ def _render_profile_events_locked(profile: dict[str, str], recent_count: int) ->
                 }
                 if len(seen) >= recent_count:
                     return
+            if not api_videos and post_api_urls and tick in {14, 18, 24, 30}:
+                metadata_retry += 1
+                for api_url in list(post_api_urls):
+                    try:
+                        response = page.request.get(api_url, timeout=8000)
+                        ingest_profile_api(response.json(), api_url)
+                    except Exception:  # noqa: BLE001
+                        continue
+                if api_videos:
+                    yield {
+                        "type": "status",
+                        "message": f"已重试作品接口，正在补齐发布时间（第 {metadata_retry} 次）",
+                        "progress": 54,
+                        "phase": "metadata",
+                    }
             # 页面卡片只含标题和点赞，通常没有发布时间、评论数和置顶状态。
             # 优先等待作品接口；只有接口迟迟未返回时才退回到页面卡片。
             dom_fallback_ready = not api_videos and tick >= 14
