@@ -274,6 +274,16 @@ def _validate_recent_count(recent_count: int) -> int:
     return value
 
 
+def _profile_video_has_metadata(video: dict[str, Any]) -> bool:
+    """Only reuse a cached work after date, comment count, and pin state are known."""
+    return bool(
+        isinstance(video, dict)
+        and (video.get("publish_time") or video.get("create_time"))
+        and video.get("comment_count") is not None
+        and "pinned" in video
+    )
+
+
 def resolve_profile(input_text: str, recent_count: int = 5, *, fetch_videos: bool = True) -> dict[str, Any]:
     """解析账号资料与最近作品。
 
@@ -285,7 +295,10 @@ def resolve_profile(input_text: str, recent_count: int = 5, *, fetch_videos: boo
     warning = ""
     cached = _read_profile_cache().get(profile["sec_user_id"], {})
     cached_videos = list(cached.get("videos") or []) if cached else []
-    if fetch_videos and len(cached_videos) >= recent_count:
+    cache_complete = len(cached_videos) >= recent_count and all(
+        _profile_video_has_metadata(video) for video in cached_videos[:recent_count]
+    )
+    if fetch_videos and cache_complete:
         profile.update({k: v for k, v in cached.get("profile", {}).items() if v})
         videos = cached_videos[:recent_count]
         profile["video_count"] = str(len(videos))
@@ -326,7 +339,10 @@ def iter_resolve_profile_events(input_text: str, recent_count: int = 5) -> Any:
     yield {"type": "status", "message": "正在检查本地作品缓存", "progress": 10, "phase": "cache"}
     cached = _read_profile_cache().get(profile["sec_user_id"], {})
     cached_videos = list(cached.get("videos") or []) if cached else []
-    if len(cached_videos) >= recent_count:
+    cache_complete = len(cached_videos) >= recent_count and all(
+        _profile_video_has_metadata(video) for video in cached_videos[:recent_count]
+    )
+    if cache_complete:
         yield {"type": "status", "message": "命中本地缓存，正在载入作品", "progress": 18, "phase": "cache"}
         profile.update({k: v for k, v in cached.get("profile", {}).items() if v})
         videos = cached_videos[:recent_count]
