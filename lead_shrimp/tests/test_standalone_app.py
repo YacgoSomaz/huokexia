@@ -135,3 +135,14 @@ def test_frontend_has_a_fast_diagnosis_area() -> None:
 
     assert "快速排错" in page
     assert "/api/comment-leads/diagnosis" in page
+
+
+def test_frontend_uses_a_compact_workbench_and_visible_controls() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert ".app{max-width:1280px" in page
+    assert ".tabs{width:184px" in page
+    assert ".tab-btn{border:1px solid #d8e2ef;background:#fff" in page
+    assert ".tab-btn.active{background:var(--brand)" in page
