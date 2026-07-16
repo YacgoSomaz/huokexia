@@ -720,7 +720,7 @@ def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: i
         target = "https://www.douyin.com/"
     profile = config.COMMENT_LEADS_PROFILE_DIR
     profile.mkdir(parents=True, exist_ok=True)
-    timeout_sec = max(30, min(wait_ms // 1000, 180))
+    timeout_sec = None if wait_ms <= 0 else max(30, min(wait_ms // 1000, 180))
 
     with sync_playwright() as p:
         try:
@@ -739,10 +739,10 @@ def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: i
                 page.goto(target, wait_until="domcontentloaded", timeout=30000)
             except Exception:  # noqa: BLE001
                 pass
-            deadline = time.time() + timeout_sec
+            deadline = None if timeout_sec is None else time.time() + timeout_sec
             jar: dict[str, str] = {}
             has_login = False
-            while time.time() < deadline:
+            while deadline is None or time.time() < deadline:
                 page.wait_for_timeout(1000)
                 jar = _context_cookie_jar(context)
                 has_login = short_video._has_douyin_login_cookie(jar)

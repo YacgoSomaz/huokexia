@@ -11,7 +11,7 @@
 已生成的本地安装包：
 
 ```text
-C:\Users\q2414\Desktop\Alhook\release\LeadShrimpSetup_0.1.0.exe
+C:\Users\q2414\Desktop\Alhook\release\LeadShrimpSetup_0.1.1.exe
 ```
 
 通用版源代码和依赖会随安装包部署，定位目标是“任何 Windows 用户可安装运行”，不是代码保护方案。商业版授权和 Nuitka 构建仍保留，但不属于当前通用版发布入口。
@@ -77,7 +77,7 @@ $env:PYTHONPATH = (Get-Location).Path
 python -m pytest lead_shrimp\tests licensing_server\tests -q
 ```
 
-最近一次通用版构建验证：38 项测试通过；内置运行时可导入 FastAPI、Playwright 和项目模块；安全扫描通过。
+最近一次通用版构建验证：53 项测试通过；内置运行时可导入 FastAPI、Playwright 和项目模块；安全扫描通过。
 
 ## 构建通用安装包
 

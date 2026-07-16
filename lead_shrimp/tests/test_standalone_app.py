@@ -186,6 +186,20 @@ def test_comment_login_state_survives_page_refresh(monkeypatch, tmp_path) -> Non
     assert first["expires_at"] > first.get("cookie_count", 0)
 
 
+def test_login_waits_until_authenticated_without_a_short_deadline() -> None:
+    from lead_shrimp import app as app_module
+    from pipeline import comment_leads
+
+    app_source = __import__("inspect").getsource(app_module.api_comment_leads_login)
+    login_source = __import__("inspect").getsource(comment_leads.open_login_browser)
+    blocking_source = __import__("inspect").getsource(app_module._run_blocking)
+
+    assert "default=0" in app_source
+    assert "_process_timeout_sec=None" in app_source
+    assert "timeout_sec = None if wait_ms <= 0 else" in login_source
+    assert "proc.join(_process_timeout_sec)" in blocking_source
+
+
 def test_expired_comment_login_state_requires_relogin(monkeypatch, tmp_path) -> None:
     from lead_shrimp import app as app_module
 

@@ -71,7 +71,7 @@ def _child_call(result_queue: Any, fn: Any, args: tuple[Any, ...], kwargs: dict[
         result_queue.put(("error", type(exc).__name__, str(exc)))
 
 
-def _run_blocking(fn, *args, **kwargs):
+def _run_blocking(fn, *args, _process_timeout_sec: float | None = 240, **kwargs):
     """Run Playwright work in a child process so sync API never meets FastAPI's event loop."""
     try:
         pickle.dumps(fn)
@@ -81,7 +81,7 @@ def _run_blocking(fn, *args, **kwargs):
     result_queue = ctx.Queue(maxsize=1)
     proc = ctx.Process(target=_child_call, args=(result_queue, fn, args, kwargs))
     proc.start()
-    proc.join(240)
+    proc.join(_process_timeout_sec)
     if proc.is_alive():
         proc.terminate()
         proc.join(5)
@@ -172,8 +172,13 @@ def api_comment_leads_status() -> JSONResponse:
 @app.post("/api/comment-leads/login")
 def api_comment_leads_login(payload: dict[str, object] = Body(default={})) -> JSONResponse:
     start_url = str(payload.get("start_url") or "https://www.douyin.com/").strip()
-    wait_ms = _bounded_int(payload.get("wait_ms"), default=30000, minimum=5000, maximum=180000)
-    result = _run_blocking(comment_leads.open_login_browser, start_url=start_url, wait_ms=wait_ms)
+    wait_ms = _bounded_int(payload.get("wait_ms"), default=0, minimum=0, maximum=180000)
+    result = _run_blocking(
+        comment_leads.open_login_browser,
+        start_url=start_url,
+        wait_ms=wait_ms,
+        _process_timeout_sec=None,
+    )
     return JSONResponse(result, status_code=200 if result.get("ok") else 503)
 
 
