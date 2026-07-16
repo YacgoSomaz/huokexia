@@ -442,6 +442,7 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert ".lead-range-rail" in page
     assert 'id="leadRangeSlider"' in page
     assert 'id="leadRangeThumb"' in page
+    assert 'id="leadRangeRail"' in page
     assert "selectLeadsToIndex" in page
     assert "onpointermove" in page
     assert "style.top" in page
@@ -454,6 +455,9 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert "getBoundingClientRect" in page
     assert "event.clientY" in page
     assert "setPointerCapture" in page
+    assert "requestAnimationFrame" in page
+    assert "scrollHeight" in page
+    assert "style.height" in page
     assert "滑动选择已开启" in page
 
 
