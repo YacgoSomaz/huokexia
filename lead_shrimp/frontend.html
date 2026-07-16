@@ -362,7 +362,7 @@
     const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
     const selectedLeadIds = new Set();
-    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:true, dragSelecting:false, rangeEnd:0 };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:true, dragSelecting:false, rangeEnd:0, rangeExcludedIds:new Set() };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -636,7 +636,7 @@
     function applyRangeToRows(rows,index){
       if(!rows.length)return;
       const end=Math.max(0,Math.min(Number(index)||0,rows.length-1));
-      rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end));
+      rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end&&!state.rangeExcludedIds.has(String(row.lead_id||''))));
       document.querySelectorAll('[data-lead-id]').forEach(input=>{
         input.checked=selectedLeadIds.has(String(input.dataset.leadId||''));
       });
@@ -696,6 +696,9 @@
     function bindLeadSelection(rows){
       document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
         const id=String(input.dataset.leadId||'');
+        if(state.dragSelectMode){
+          if(input.checked)state.rangeExcludedIds.delete(id);else state.rangeExcludedIds.add(id);
+        }
         setLeadSelection(id,input.checked);
         const master=$('selectVisibleLeads');
         if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
@@ -736,7 +739,8 @@
       if(master)master.onchange=()=>{
         rows.forEach(row=>{
           const id=String(row.lead_id||'');
-          if(master.checked)selectedLeadIds.add(id);else selectedLeadIds.delete(id);
+          if(master.checked){state.rangeExcludedIds.delete(id);selectedLeadIds.add(id)}
+          else{state.rangeExcludedIds.add(id);selectedLeadIds.delete(id)}
         });
         renderLeads();
       };
@@ -873,7 +877,8 @@
     $('dragSelectLeads').textContent='滑动选择已开启';
     $('dragSelectLeads').onclick=()=>{
       state.dragSelectMode=!state.dragSelectMode;
-      if(!state.dragSelectMode)state.rangeEnd=0;
+      if(state.dragSelectMode){state.rangeEnd=0;state.rangeExcludedIds.clear()}
+      else state.rangeEnd=0;
       $('dragSelectLeads').classList.toggle('active',state.dragSelectMode);
       $('dragSelectLeads').textContent=state.dragSelectMode?'滑动选择已开启':'滑动选择';
       renderLeads();
