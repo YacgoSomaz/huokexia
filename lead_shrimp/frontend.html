@@ -363,7 +363,7 @@
     const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
     const selectedLeadIds = new Set();
-    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:false, dragSelecting:false, rangeEnd:0 };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:true, dragSelecting:false, rangeEnd:0 };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -600,6 +600,7 @@
         <div class="subtle">${escapeHtml(formatTime(x.create_time))}</div>
         <div class="action-col">${x.commenter_profile_url?`<button class="btn secondary" data-profile="${escapeHtml(x.commenter_profile_url)}">打开主页</button>`:'<span class="subtle">无主页</span>'}</div>
       </article>`).join('');
+      if(state.dragSelectMode)applyRangeToRows(rows,state.rangeEnd);
       document.querySelectorAll('[data-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.profile,'_blank','noopener'));
       bindLeadSelection(rows);
     }
@@ -633,14 +634,18 @@
     function updateExportButton(){
       $('exportLeads').textContent=`导出选中（${selectedLeadIds.size}）`;
     }
-    function selectLeadsToIndex(rows,index){
+    function applyRangeToRows(rows,index){
       if(!rows.length)return;
       const end=Math.max(0,Math.min(Number(index)||0,rows.length-1));
-      state.rangeEnd=end;
       rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end));
       document.querySelectorAll('[data-lead-id]').forEach(input=>{
         input.checked=selectedLeadIds.has(String(input.dataset.leadId||''));
       });
+    }
+    function selectLeadsToIndex(rows,index){
+      if(!rows.length)return;
+      state.rangeEnd=Math.max(0,Math.min(Number(index)||0,rows.length-1));
+      applyRangeToRows(rows,state.rangeEnd);
     }
     function bindLeadSelection(rows){
       document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
@@ -788,6 +793,8 @@
     $('leadStartDate').onchange=renderLeads;
     $('leadEndDate').onchange=renderLeads;
     $('selectLeadsByDate').onclick=selectLeadsByDate;
+    $('dragSelectLeads').classList.add('active');
+    $('dragSelectLeads').textContent='滑动选择已开启';
     $('dragSelectLeads').onclick=()=>{
       state.dragSelectMode=!state.dragSelectMode;
       if(!state.dragSelectMode)state.rangeEnd=0;
