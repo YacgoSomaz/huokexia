@@ -233,6 +233,19 @@ def test_completed_setup_status_bar_collapses_to_reduce_top_blank_space() -> Non
     assert "$('setupPanel').classList.toggle('is-complete'" in page
 
 
+def test_frontend_groups_lead_filters_into_a_compact_workbench_toolbar() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert '<div class="toolbar lead-toolbar">' in page
+    assert 'class="date-range"' in page
+    assert 'class="selection-tools"' in page
+    assert ".lead-toolbar{" in page
+    assert ".date-range{" in page
+    assert ".selection-tools{" in page
+
+
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
     from lead_shrimp.app import frontend_path
 
