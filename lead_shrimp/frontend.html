@@ -47,7 +47,8 @@
     .next-card{background:linear-gradient(135deg,#10233f,#18395f);color:#f4f8ff;border-radius:13px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:300px}
     .next-card b{display:block;font-size:15px;margin-bottom:4px;color:#9eeddc}
     .next-card small{display:block;color:#c4d3e8;line-height:1.45}
-    .setup{padding:10px 12px;display:flex;gap:8px;align-items:center;overflow:auto}
+    .setup{padding:10px 12px;display:flex;gap:8px;align-items:center;overflow:auto;transition:opacity .18s ease,transform .18s ease}
+    .setup.is-complete{display:none}
     .step{display:flex;align-items:center;gap:8px;min-width:190px;padding:9px 10px;border:1px solid #e8edf5;border-radius:12px;background:#fbfdff}
     .step-no{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:900;font-size:12px;flex:0 0 auto}
     .step.done .step-no{background:var(--green-soft);color:var(--green)}
@@ -409,6 +410,7 @@
       $('stepLicense').classList.toggle('current',!licenseReady);
       $('stepLogin').classList.toggle('current',licenseReady&&!state.loggedIn);
       $('stepMonitor').classList.toggle('current',licenseReady&&state.loggedIn&&!(state.monitors||[]).length);
+      $('setupPanel').classList.toggle('is-complete',licenseReady&&state.loggedIn&&(state.monitors||[]).length>0);
       $('licenseStepText').textContent=state.licensed?'权益已生效。':(state.licenseRequired?'输入卡密后开放采集和导出。':'本地模式可直接使用。');
       $('loginStepText').textContent=state.loggedIn?'登录态可用。':'在官方窗口扫码或输入账号。';
     }
