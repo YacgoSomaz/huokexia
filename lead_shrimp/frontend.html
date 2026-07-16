@@ -105,9 +105,15 @@
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
     .lead-list{display:grid;max-height:640px;overflow:auto}
-    .lead{display:grid;grid-template-columns:30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
-    .lead.drag-target{user-select:none;cursor:crosshair}
+    .lead{display:grid;grid-template-columns:18px 30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead.drag-target{user-select:none}
     .lead.drag-target:hover{background:#f4f8ff}
+    .lead-select-rail{display:flex;justify-content:center;padding-top:2px;min-height:22px}
+    .lead-select-handle{width:16px;height:16px;padding:0;border:2px solid #b9c9df;border-radius:50%;background:#fff;cursor:default;box-shadow:0 0 0 3px transparent;transition:.15s}
+    .lead-select-handle:hover,.lead-select-handle:focus-visible{border-color:var(--brand);box-shadow:0 0 0 3px #e5efff;outline:0}
+    .drag-target .lead-select-handle{cursor:grab}
+    .drag-target .lead-select-handle:active{cursor:grabbing}
+    .drag-target .lead-select-handle.selected{border-color:var(--brand);background:var(--brand);box-shadow:inset 0 0 0 3px #fff}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
     .person{font-weight:900;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .subtle{color:var(--muted);font-size:12px;line-height:1.45}
@@ -130,7 +136,7 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:18px 30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
     @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
@@ -575,13 +581,14 @@
       });
       $('leadCount').textContent=allLeads.length;
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
-      const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
+      const header='<div class="lead header"><span aria-hidden="true"></span><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
       if(!rows.length){
         $('leadList').innerHTML=header+'<div class="empty">没有匹配的线索。换个关键词，或添加新的监控对象。</div>';
         bindLeadSelection([]);
         return;
       }
       $('leadList').innerHTML=header+rows.map(x=>`<article class="lead ${state.dragSelectMode?'drag-target':''}" data-lead-row="${escapeHtml(x.lead_id||'')}">
+        <div class="lead-select-rail"><button type="button" class="lead-select-handle ${selectedLeadIds.has(String(x.lead_id||''))?'selected':''}" data-drag-handle="${escapeHtml(x.lead_id||'')}" aria-label="拖动选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></button></div>
         <div><input type="checkbox" data-lead-id="${escapeHtml(x.lead_id||'')}"${selectedLeadIds.has(String(x.lead_id||''))?' checked':''} aria-label="选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></div>
         <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
@@ -604,6 +611,9 @@
       const cleanId=String(id||'');
       if(!cleanId)return;
       if(checked)selectedLeadIds.add(cleanId);else selectedLeadIds.delete(cleanId);
+      document.querySelectorAll('[data-drag-handle]').forEach(handle=>{
+        if(String(handle.dataset.dragHandle||'')===cleanId)handle.classList.toggle('selected',checked);
+      });
       updateExportButton();
     }
     function selectLeadsByDate(){
@@ -630,15 +640,20 @@
         const master=$('selectVisibleLeads');
         if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
       });
-      document.querySelectorAll('[data-lead-row]').forEach(row=>{
-        row.onpointerdown=event=>{
+      document.querySelectorAll('[data-drag-handle]').forEach(handle=>{
+        handle.onpointerdown=event=>{
           if(!state.dragSelectMode||event.button!==0)return;
+          const row=handle.closest('[data-lead-row]');
+          if(!row)return;
           state.dragSelecting=true;
-          state.dragValue=!selectedLeadIds.has(String(row.dataset.leadRow||''));
-          setLeadSelection(row.dataset.leadRow,state.dragValue);
-          row.setPointerCapture?.(event.pointerId);
+          state.dragValue=true;
+          setLeadSelection(row.dataset.leadRow,true);
+          handle.classList.add('selected');
           event.preventDefault();
+          event.stopPropagation();
         };
+      });
+      document.querySelectorAll('[data-lead-row]').forEach(row=>{
         row.onpointerenter=()=>{
           if(state.dragSelecting)setLeadSelection(row.dataset.leadRow,state.dragValue);
         };
@@ -787,6 +802,7 @@
       renderLeads();
     };
     document.addEventListener('pointerup',()=>{state.dragSelecting=false});
+    document.addEventListener('pointercancel',()=>{state.dragSelecting=false});
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
