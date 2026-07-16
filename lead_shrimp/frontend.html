@@ -64,6 +64,7 @@
     .tab-btn:hover{border-color:#c8d7eb;background:#f8fbff;color:#214c9e}
     .tab-btn.active{background:#fff;color:var(--brand-strong);border-color:#c8d9f2;box-shadow:0 5px 14px rgba(30,65,118,.09)}
     .tab-index{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:#dfeafa;color:#5b78a5;font-size:11px;flex:0 0 auto}
+    .tab-btn.is-complete:not(.active) .tab-index{background:var(--green-soft);color:var(--green)}
     .tab-btn.active .tab-index{background:var(--brand);color:#fff}
     .tab-copy{display:grid;gap:2px;min-width:0}
     .tab-copy small{color:#8693a6;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -224,16 +225,16 @@
     <section class="workspace">
       <nav class="tabs" aria-label="工作区切换">
         <div class="tabs-caption">工作流程</div>
-        <button class="tab-btn active" data-tab="leadsTab" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>评论线索</b><small id="navLeadHint">等待加载</small></span></button>
-        <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>新增监控</b><small>添加主页或视频</small></span></button>
-        <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
+        <button class="tab-btn active" data-tab="addTab" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>新增监控</b><small>添加主页或视频</small></span></button>
+        <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
+        <button class="tab-btn" data-tab="leadsTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>评论线索</b><small id="navLeadHint">等待加载</small></span></button>
         <button class="tab-btn" data-tab="monitorsTab" type="button"><span class="tab-index">04</span><span class="tab-copy"><b>监控列表</b><small id="navMonitorHint">等待加载</small></span></button>
         <span class="tab-spacer"></span>
         <div class="tab-utility"><small>账号状态</small><button id="quickLogin" class="btn secondary" type="button">检查登录</button></div>
       </nav>
 
       <section class="main">
-      <section id="addTab" class="tab-panel">
+      <section id="addTab" class="tab-panel active">
         <section class="panel">
           <div class="head">
             <h2>新增监控</h2>
@@ -313,7 +314,7 @@
         </section>
       </section>
 
-      <section id="leadsTab" class="tab-panel active panel inbox">
+      <section id="leadsTab" class="tab-panel panel inbox">
           <div class="head">
             <div>
               <h2>评论线索</h2>
@@ -407,6 +408,15 @@
       document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.toggle('active',panel.id===id));
       if(id==='worksTab'&&!state.pendingVideos.length)loadCachedWorks();
     }
+    function chooseInitialTab(){
+      if(!state.monitors.length)switchTab('addTab');
+      else if(allLeads.length)switchTab('leadsTab');
+      else switchTab('monitorsTab');
+    }
+    function updateWorkflowNav(){
+      const complete={addTab:state.monitors.length>0,worksTab:state.pendingVideos.length>0,leadsTab:allLeads.length>0,monitorsTab:state.monitors.length>0};
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>btn.classList.toggle('is-complete',Boolean(complete[btn.dataset.tab])));
+    }
     async function api(path,options={}){
       const res=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
       const raw=await res.text();
@@ -469,6 +479,7 @@
       state.monitors=rows;
       $('monitorCount').textContent=rows.length;
       $('navMonitorHint').textContent=rows.length?`${rows.length} 个账号`:'还没有账号';
+      updateWorkflowNav();
       $('monitors').innerHTML=rows.length?rows.map(m=>{
         const title=escapeHtml(m.title||m.author_name||'待识别账号');
         const avatar=escapeHtml(m.author_avatar||m.avatar_url||'');
@@ -551,6 +562,7 @@
       state.pendingMonitor=monitor;
       state.pendingVideos=videos||[];
       $('navWorkHint').textContent=state.pendingVideos.length?`${state.pendingVideos.length} 个作品`:'等待确认';
+      updateWorkflowNav();
       $('workAgeFilter').value='0';
       $('includePinnedWorks').checked=true;
       renderWorkList();
@@ -613,6 +625,7 @@
       });
       $('leadCount').textContent=allLeads.length;
       $('navLeadHint').textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
+      updateWorkflowNav();
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
       $('leadList').classList.toggle('range-mode',state.dragSelectMode);
       const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
@@ -920,7 +933,7 @@
     document.addEventListener('pointercancel',()=>{state.dragSelecting=false});
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
 
-    Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]);
+    Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]).then(chooseInitialTab);
   </script>
 </body>
 </html>

@@ -259,6 +259,21 @@ def test_frontend_exposes_task_oriented_navigation_and_selection_feedback() -> N
     assert ".lead-selection-summary{" in page
 
 
+def test_frontend_starts_with_setup_and_orders_tabs_by_real_workflow() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    add = page.index('data-tab="addTab"')
+    works = page.index('data-tab="worksTab"')
+    leads = page.index('data-tab="leadsTab"')
+    monitors = page.index('data-tab="monitorsTab"')
+    assert add < works < leads < monitors
+    assert "function chooseInitialTab()" in page
+    assert "chooseInitialTab" in page
+    assert "function updateWorkflowNav()" in page
+
+
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
     from lead_shrimp.app import frontend_path
 
