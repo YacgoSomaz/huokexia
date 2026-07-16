@@ -224,6 +224,15 @@ def test_frontend_uses_a_compact_workbench_and_visible_controls() -> None:
     assert ".tab-btn.active{background:var(--brand)" in page
 
 
+def test_completed_setup_status_bar_collapses_to_reduce_top_blank_space() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert ".setup.is-complete{display:none}" in page
+    assert "$('setupPanel').classList.toggle('is-complete'" in page
+
+
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
     from lead_shrimp.app import frontend_path
 
