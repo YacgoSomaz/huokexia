@@ -104,16 +104,18 @@
     .inbox{min-width:0}
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .search{margin-left:auto;min-width:260px;max-width:360px;flex:1;border:1px solid #d8e2ef;border-radius:10px;padding:10px 12px;outline:0}
-    .lead-list{display:grid;max-height:640px;overflow:auto}
-    .lead{display:grid;grid-template-columns:18px 30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead-list{display:grid;max-height:640px;overflow:auto;position:relative}
+    .lead{display:grid;grid-template-columns:30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
     .lead.drag-target{user-select:none}
     .lead.drag-target:hover{background:#f4f8ff}
-    .lead-select-rail{display:flex;justify-content:center;padding-top:2px;min-height:22px}
-    .lead-select-handle{width:16px;height:16px;padding:0;border:2px solid #b9c9df;border-radius:50%;background:#fff;cursor:default;box-shadow:0 0 0 3px transparent;transition:.15s}
-    .lead-select-handle:hover,.lead-select-handle:focus-visible{border-color:var(--brand);box-shadow:0 0 0 3px #e5efff;outline:0}
-    .drag-target .lead-select-handle{cursor:grab}
-    .drag-target .lead-select-handle:active{cursor:grabbing}
-    .drag-target .lead-select-handle.selected{border-color:var(--brand);background:var(--brand);box-shadow:inset 0 0 0 3px #fff}
+    .lead-list.range-mode .lead{padding-left:44px}
+    .lead-range-rail{position:absolute;left:14px;top:54px;bottom:14px;width:18px;z-index:3;display:flex;justify-content:center}
+    .lead-range-slider{width:18px;height:100%;margin:0;appearance:none;writing-mode:vertical-lr;direction:ltr;background:transparent;cursor:ns-resize}
+    .lead-range-slider::-webkit-slider-runnable-track{width:4px;background:#d8e4f3;border-radius:999px}
+    .lead-range-slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;margin-left:-7px;border:3px solid #fff;border-radius:50%;background:var(--brand);box-shadow:0 2px 8px rgba(36,95,202,.35)}
+    .lead-range-slider::-moz-range-track{width:4px;background:#d8e4f3;border-radius:999px}
+    .lead-range-slider::-moz-range-thumb{width:18px;height:18px;border:3px solid #fff;border-radius:50%;background:var(--brand);box-shadow:0 2px 8px rgba(36,95,202,.35)}
+    .lead-range-slider:focus-visible{outline:2px solid #8bb4f7;outline-offset:3px;border-radius:999px}
     .lead.header{position:sticky;top:0;z-index:2;background:#fbfdff;color:#77849a;font-size:12px;font-weight:800;padding-top:12px;padding-bottom:12px}
     .person{font-weight:900;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .subtle{color:var(--muted);font-size:12px;line-height:1.45}
@@ -136,7 +138,7 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:18px 30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
     @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
@@ -361,7 +363,7 @@
     const DEFAULT_WORK_WINDOW_DAYS=30;
     let allLeads = [];
     const selectedLeadIds = new Set();
-    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:false, dragSelecting:false };
+    let state = { licensed:false, licenseRequired:true, loggedIn:false, monitors:[], pendingMonitor:null, pendingVideos:[], dragSelectMode:false, dragSelecting:false, rangeEnd:0 };
 
     function escapeHtml(value){
       return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -581,14 +583,15 @@
       });
       $('leadCount').textContent=allLeads.length;
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
-      const header='<div class="lead header"><span aria-hidden="true"></span><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
+      $('leadList').classList.toggle('range-mode',state.dragSelectMode);
+      const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
       if(!rows.length){
         $('leadList').innerHTML=header+'<div class="empty">没有匹配的线索。换个关键词，或添加新的监控对象。</div>';
         bindLeadSelection([]);
         return;
       }
-      $('leadList').innerHTML=header+rows.map(x=>`<article class="lead ${state.dragSelectMode?'drag-target':''}" data-lead-row="${escapeHtml(x.lead_id||'')}">
-        <div class="lead-select-rail"><button type="button" class="lead-select-handle ${selectedLeadIds.has(String(x.lead_id||''))?'selected':''}" data-drag-handle="${escapeHtml(x.lead_id||'')}" aria-label="拖动选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></button></div>
+      const rangeRail=state.dragSelectMode?`<div class="lead-range-rail"><input id="leadRangeSlider" class="lead-range-slider" type="range" min="0" max="${Math.max(0,rows.length-1)}" value="${Math.min(state.rangeEnd,Math.max(0,rows.length-1))}" aria-label="拖动选择评论范围" title="向下拖动选择从第一条到当前位置的评论"></div>`:'';
+      $('leadList').innerHTML=rangeRail+header+rows.map(x=>`<article class="lead ${state.dragSelectMode?'drag-target':''}" data-lead-row="${escapeHtml(x.lead_id||'')}">
         <div><input type="checkbox" data-lead-id="${escapeHtml(x.lead_id||'')}"${selectedLeadIds.has(String(x.lead_id||''))?' checked':''} aria-label="选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></div>
         <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
@@ -611,9 +614,6 @@
       const cleanId=String(id||'');
       if(!cleanId)return;
       if(checked)selectedLeadIds.add(cleanId);else selectedLeadIds.delete(cleanId);
-      document.querySelectorAll('[data-drag-handle]').forEach(handle=>{
-        if(String(handle.dataset.dragHandle||'')===cleanId)handle.classList.toggle('selected',checked);
-      });
       updateExportButton();
     }
     function selectLeadsByDate(){
@@ -633,6 +633,15 @@
     function updateExportButton(){
       $('exportLeads').textContent=`导出选中（${selectedLeadIds.size}）`;
     }
+    function selectLeadsToIndex(rows,index){
+      if(!rows.length)return;
+      const end=Math.max(0,Math.min(Number(index)||0,rows.length-1));
+      state.rangeEnd=end;
+      rows.slice(0,end+1).forEach(row=>setLeadSelection(row.lead_id,true));
+      document.querySelectorAll('[data-lead-id]').forEach(input=>{
+        input.checked=selectedLeadIds.has(String(input.dataset.leadId||''));
+      });
+    }
     function bindLeadSelection(rows){
       document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
         const id=String(input.dataset.leadId||'');
@@ -640,24 +649,8 @@
         const master=$('selectVisibleLeads');
         if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
       });
-      document.querySelectorAll('[data-drag-handle]').forEach(handle=>{
-        handle.onpointerdown=event=>{
-          if(!state.dragSelectMode||event.button!==0)return;
-          const row=handle.closest('[data-lead-row]');
-          if(!row)return;
-          state.dragSelecting=true;
-          state.dragValue=true;
-          setLeadSelection(row.dataset.leadRow,true);
-          handle.classList.add('selected');
-          event.preventDefault();
-          event.stopPropagation();
-        };
-      });
-      document.querySelectorAll('[data-lead-row]').forEach(row=>{
-        row.onpointerenter=()=>{
-          if(state.dragSelecting)setLeadSelection(row.dataset.leadRow,state.dragValue);
-        };
-      });
+      const slider=$('leadRangeSlider');
+      if(slider)slider.oninput=()=>selectLeadsToIndex(rows,slider.value);
       const master=$('selectVisibleLeads');
       if(master)master.onchange=()=>{
         rows.forEach(row=>{
@@ -797,6 +790,7 @@
     $('selectLeadsByDate').onclick=selectLeadsByDate;
     $('dragSelectLeads').onclick=()=>{
       state.dragSelectMode=!state.dragSelectMode;
+      if(!state.dragSelectMode)state.rangeEnd=0;
       $('dragSelectLeads').classList.toggle('active',state.dragSelectMode);
       $('dragSelectLeads').textContent=state.dragSelectMode?'滑动选择已开启':'滑动选择';
       renderLeads();
