@@ -446,7 +446,7 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert "selectLeadsToIndex" in page
     assert "onpointermove" in page
     assert "style.top" in page
-    assert "rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end))" in page
+    assert "rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end&&!state.rangeExcludedIds.has(String(row.lead_id||''))))" in page
     assert ".lead-range-rail{position:absolute;left:10px;top:42px;bottom:0;width:36px" in page
     assert ".lead-range-slider{position:relative;width:36px" in page
     assert "dragSelectMode:true" in page
@@ -458,6 +458,9 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert "requestAnimationFrame" in page
     assert "scrollHeight" in page
     assert "style.height" in page
+    assert "rangeExcludedIds" in page
+    assert "rangeExcludedIds.add" in page
+    assert "!state.rangeExcludedIds.has" in page
     assert "滑动选择已开启" in page
 
 
