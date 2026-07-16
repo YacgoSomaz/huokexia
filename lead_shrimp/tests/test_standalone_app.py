@@ -448,6 +448,10 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert ".lead-range-slider{width:36px" in page
     assert "dragSelectMode:true" in page
     assert "applyRangeToRows" in page
+    assert "rowIndexAtY" in page
+    assert "getBoundingClientRect" in page
+    assert "event.clientY" in page
+    assert "setPointerCapture" in page
     assert "滑动选择已开启" in page
 
 
