@@ -430,20 +430,19 @@ def test_lead_list_supports_drag_selection_and_date_range_selection() -> None:
     assert 'id="leadStartDate"' in page
     assert 'id="leadEndDate"' in page
     assert 'id="dragSelectLeads"' in page
-    assert "pointerenter" in page
     assert "selectLeadsByDate" in page
+    assert "leadRangeSlider" in page
 
 
-def test_drag_selection_uses_a_dedicated_circular_handle_before_checkbox() -> None:
+def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None:
     from lead_shrimp.app import frontend_path
 
     page = frontend_path().read_text(encoding="utf-8")
 
-    assert ".lead-select-rail" in page
-    assert ".lead-select-handle" in page
-    assert 'data-drag-handle=' in page
-    assert "pointerdown" in page
-    assert "event.stopPropagation()" in page
+    assert ".lead-range-rail" in page
+    assert 'id="leadRangeSlider"' in page
+    assert "selectLeadsToIndex" in page
+    assert "oninput" in page
 
 
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
