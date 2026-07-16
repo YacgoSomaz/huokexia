@@ -443,6 +443,9 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert 'id="leadRangeSlider"' in page
     assert "selectLeadsToIndex" in page
     assert "oninput" in page
+    assert "rows.forEach((row,i)=>setLeadSelection(row.lead_id,i<=end))" in page
+    assert ".lead-range-rail{position:absolute;left:10px;top:54px;bottom:14px;width:36px" in page
+    assert ".lead-range-slider{width:36px" in page
 
 
 def test_monitor_list_is_a_compact_avatar_grid() -> None:
