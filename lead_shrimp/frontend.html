@@ -647,6 +647,24 @@
       state.rangeEnd=Math.max(0,Math.min(Number(index)||0,rows.length-1));
       applyRangeToRows(rows,state.rangeEnd);
     }
+    function rowIndexAtY(rows,y){
+      const rowElements=Array.from(document.querySelectorAll('[data-lead-row]'));
+      if(!rowElements.length)return 0;
+      let closest=0;
+      let closestDistance=Number.POSITIVE_INFINITY;
+      rowElements.forEach((row,index)=>{
+        const rect=row.getBoundingClientRect();
+        if(y>=rect.top&&y<=rect.bottom){closest=index;closestDistance=0;return}
+        const distance=y<rect.top?rect.top-y:y-rect.bottom;
+        if(distance<closestDistance){closest=index;closestDistance=distance}
+      });
+      return Math.max(0,Math.min(closest,rows.length-1));
+    }
+    function setRangeFromPointer(rows,slider,event){
+      const index=rowIndexAtY(rows,event.clientY);
+      slider.value=String(index);
+      selectLeadsToIndex(rows,index);
+    }
     function bindLeadSelection(rows){
       document.querySelectorAll('[data-lead-id]').forEach(input=>input.onchange=()=>{
         const id=String(input.dataset.leadId||'');
@@ -655,7 +673,21 @@
         if(master)master.checked=rows.length>0&&rows.every(row=>selectedLeadIds.has(String(row.lead_id||'')));
       });
       const slider=$('leadRangeSlider');
-      if(slider)slider.oninput=()=>selectLeadsToIndex(rows,slider.value);
+      if(slider){
+        slider.oninput=()=>selectLeadsToIndex(rows,slider.value);
+        slider.onpointerdown=event=>{
+          if(event.button!==0)return;
+          state.dragSelecting=true;
+          slider.setPointerCapture?.(event.pointerId);
+          event.preventDefault();
+          setRangeFromPointer(rows,slider,event);
+        };
+        slider.onpointermove=event=>{
+          if(state.dragSelecting)setRangeFromPointer(rows,slider,event);
+        };
+        slider.onpointerup=()=>{state.dragSelecting=false};
+        slider.onpointercancel=()=>{state.dragSelecting=false};
+      }
       const master=$('selectVisibleLeads');
       if(master)master.onchange=()=>{
         rows.forEach(row=>{
