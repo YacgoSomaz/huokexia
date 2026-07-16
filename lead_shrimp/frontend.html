@@ -34,10 +34,11 @@
     .btn.ghost:hover{background:#eaf2ff;border-color:#9db9ec}
     .btn.warn{background:var(--amber)}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-    .hero{display:grid;gap:14px;margin-bottom:14px}
+    .hero{display:grid;gap:12px;margin-bottom:14px}
     .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
     .today{padding:13px 16px;display:grid;grid-template-columns:minmax(270px,1.05fr) minmax(400px,1.35fr) minmax(250px,.8fr);gap:12px;align-items:center}
     .today-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .today-kicker{display:block;color:var(--brand);font-size:11px;font-weight:900;letter-spacing:.08em;margin-bottom:5px}
     .today h2{font-size:18px;margin-bottom:3px}
     .today p{color:var(--muted);line-height:1.4;font-size:12px}
     .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -57,16 +58,25 @@
     .step small{color:var(--muted);line-height:1.25;font-size:12px}
     .step .btn{display:none}
     .workspace{display:grid;grid-template-columns:184px minmax(0,1fr);gap:16px;align-items:start}
-    .tabs{width:184px;display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:0;position:sticky;top:14px;z-index:6;background:transparent}
-    .tab-btn{border:1px solid #d8e2ef;background:#fff;color:#41536d;border-radius:10px;padding:12px 13px;font-weight:900;text-align:left;box-shadow:0 1px 2px rgba(24,39,75,.04);transition:.16s ease}
-    .tab-btn:hover{border-color:#aebfda;background:#f7faff;color:#214c9e}
-    .tab-btn.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 8px 18px rgba(37,99,235,.22)}
-    .tab-spacer{height:6px;border-top:1px solid var(--line);margin-top:4px}
+    .tabs{width:184px;display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:14px 10px;position:sticky;top:14px;z-index:6;background:#edf3fb;border:1px solid #dbe5f1;border-radius:14px}
+    .tabs-caption{padding:0 8px 7px;color:#7b8aa0;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .tab-btn{display:flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;color:#41536d;border-radius:10px;padding:10px 9px;font-weight:900;text-align:left;box-shadow:none;transition:.16s ease}
+    .tab-btn:hover{border-color:#c8d7eb;background:#f8fbff;color:#214c9e}
+    .tab-btn.active{background:#fff;color:var(--brand-strong);border-color:#c8d9f2;box-shadow:0 5px 14px rgba(30,65,118,.09)}
+    .tab-index{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:#dfeafa;color:#5b78a5;font-size:11px;flex:0 0 auto}
+    .tab-btn.active .tab-index{background:var(--brand);color:#fff}
+    .tab-copy{display:grid;gap:2px;min-width:0}
+    .tab-copy small{color:#8693a6;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tab-btn.active .tab-copy small{color:#6d86ad}
+    .tab-spacer{height:8px;border-top:1px solid #d7e1ef;margin-top:5px}
+    .tab-utility{display:grid;gap:7px;padding:8px 0 0}
+    .tab-utility small{padding:0 8px;color:#7b8aa0;font-size:11px}
+    .tab-utility .btn{width:100%;justify-content:center}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
     .main{display:block}
     .stack{display:grid;gap:16px}
-    .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
     .head h2{font-size:16px}
     .head small{color:var(--muted)}
     .body{padding:16px 18px}
@@ -103,6 +113,9 @@
     .work img{width:74px;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#e9eef7}
     .work-title{font-weight:900;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .inbox{min-width:0}
+    .lead-selection-summary{display:flex;align-items:center;gap:8px;margin-top:4px;color:var(--muted);font-size:12px}
+    .selection-count{color:var(--brand);font-weight:900}
+    .head .btn{white-space:nowrap}
     .toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
     .lead-toolbar{display:grid;grid-template-columns:auto minmax(220px,1fr) minmax(128px,160px) minmax(148px,180px) auto auto;gap:8px;padding:12px 16px;background:#fbfdff}
     .lead-toolbar .search{margin:0;min-width:0;max-width:none;width:100%;flex:initial}
@@ -145,9 +158,8 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}}
     @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}.lead-toolbar{grid-template-columns:auto minmax(220px,1fr) repeat(2,minmax(128px,1fr))}.date-range,.selection-tools{grid-column:1/-1}}
-    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px 0;background:var(--canvas)}.tab-btn{white-space:nowrap;text-align:center}.tab-spacer{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.lead-toolbar{display:flex;align-items:stretch}.lead-toolbar>*{width:100%}.date-range,.selection-tools{width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
+    @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px;background:var(--canvas);border:1px solid var(--line)}.tabs-caption,.tab-utility,.tab-spacer{display:none}.tab-btn{white-space:nowrap;text-align:center}.tab-copy small{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.lead-toolbar{display:flex;align-items:stretch}.lead-toolbar>*{width:100%}.date-range,.selection-tools{width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
 <body>
@@ -170,6 +182,7 @@
       <section class="panel today">
         <div class="today-head">
           <div>
+            <span class="today-kicker">今日工作</span>
             <h2 id="todayTitle">今天的线索看板</h2>
             <p id="todaySubtitle">完成登录后，添加一个抖音主页或视频，系统会把新评论整理成可跟进线索。</p>
           </div>
@@ -210,12 +223,13 @@
 
     <section class="workspace">
       <nav class="tabs" aria-label="工作区切换">
-        <button class="tab-btn active" data-tab="leadsTab" type="button">评论线索</button>
-        <button class="tab-btn" data-tab="addTab" type="button">新增监控</button>
-        <button class="tab-btn" data-tab="worksTab" type="button">选择作品</button>
-        <button class="tab-btn" data-tab="monitorsTab" type="button">监控列表</button>
+        <div class="tabs-caption">工作流程</div>
+        <button class="tab-btn active" data-tab="leadsTab" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>评论线索</b><small id="navLeadHint">等待加载</small></span></button>
+        <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>新增监控</b><small>添加主页或视频</small></span></button>
+        <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
+        <button class="tab-btn" data-tab="monitorsTab" type="button"><span class="tab-index">04</span><span class="tab-copy"><b>监控列表</b><small id="navMonitorHint">等待加载</small></span></button>
         <span class="tab-spacer"></span>
-        <button id="quickLogin" class="btn secondary" type="button">检查登录</button>
+        <div class="tab-utility"><small>账号状态</small><button id="quickLogin" class="btn secondary" type="button">检查登录</button></div>
       </nav>
 
       <section class="main">
@@ -300,11 +314,11 @@
       </section>
 
       <section id="leadsTab" class="tab-panel active panel inbox">
-        <div class="head">
-          <div>
-            <h2>评论线索</h2>
-            <small id="visibleCount">当前显示 0 条</small>
-          </div>
+          <div class="head">
+            <div>
+              <h2>评论线索</h2>
+              <div class="lead-selection-summary"><span id="visibleCount">当前显示 0 条</span><span aria-hidden="true">·</span><span>已选 <strong id="selectionSummary" class="selection-count">0</strong> 条</span></div>
+            </div>
           <button id="exportLeads" class="btn secondary">导出选中（0）</button>
         </div>
         <div class="toolbar lead-toolbar">
@@ -454,6 +468,7 @@
     function renderMonitors(rows){
       state.monitors=rows;
       $('monitorCount').textContent=rows.length;
+      $('navMonitorHint').textContent=rows.length?`${rows.length} 个账号`:'还没有账号';
       $('monitors').innerHTML=rows.length?rows.map(m=>{
         const title=escapeHtml(m.title||m.author_name||'待识别账号');
         const avatar=escapeHtml(m.author_avatar||m.avatar_url||'');
@@ -535,6 +550,7 @@
     function renderWorks(monitor,videos){
       state.pendingMonitor=monitor;
       state.pendingVideos=videos||[];
+      $('navWorkHint').textContent=state.pendingVideos.length?`${state.pendingVideos.length} 个作品`:'等待确认';
       $('workAgeFilter').value='0';
       $('includePinnedWorks').checked=true;
       renderWorkList();
@@ -596,6 +612,7 @@
         return sort==='oldest'?av-bv:bv-av;
       });
       $('leadCount').textContent=allLeads.length;
+      $('navLeadHint').textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
       $('leadList').classList.toggle('range-mode',state.dragSelectMode);
       const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
@@ -647,6 +664,7 @@
     }
     function updateExportButton(){
       $('exportLeads').textContent=`导出选中（${selectedLeadIds.size}）`;
+      $('selectionSummary').textContent=selectedLeadIds.size;
     }
     function applyRangeToRows(rows,index){
       if(!rows.length)return;

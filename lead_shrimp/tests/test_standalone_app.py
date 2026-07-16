@@ -220,8 +220,8 @@ def test_frontend_uses_a_compact_workbench_and_visible_controls() -> None:
 
     assert ".app{max-width:none" in page
     assert ".tabs{width:184px" in page
-    assert ".tab-btn{border:1px solid #d8e2ef;background:#fff" in page
-    assert ".tab-btn.active{background:var(--brand)" in page
+    assert ".tab-btn{display:flex;align-items:center" in page
+    assert ".tab-btn.active{background:#fff" in page
 
 
 def test_completed_setup_status_bar_collapses_to_reduce_top_blank_space() -> None:
@@ -244,6 +244,19 @@ def test_frontend_groups_lead_filters_into_a_compact_workbench_toolbar() -> None
     assert ".lead-toolbar{" in page
     assert ".date-range{" in page
     assert ".selection-tools{" in page
+
+
+def test_frontend_exposes_task_oriented_navigation_and_selection_feedback() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'class="today-kicker"' in page
+    assert 'class="tab-index"' in page
+    assert 'id="navLeadHint"' in page
+    assert 'id="selectionSummary"' in page
+    assert ".tabs-caption{" in page
+    assert ".lead-selection-summary{" in page
 
 
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
