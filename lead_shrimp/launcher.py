@@ -11,6 +11,7 @@ import traceback
 import urllib.error
 import urllib.request
 import webbrowser
+from html import escape
 from pathlib import Path
 
 
@@ -89,17 +90,19 @@ def service_ready(port: int) -> bool:
         return False
 
 
-def _startup_error_file(root: Path, message: str) -> Path:
+def _startup_error_file(root: Path, message: str, user_message: str = "服务启动失败，请查看日志") -> Path:
     data_dir = Path(os.environ.get("LEADSHRIMP_DATA_DIR") or root / "data")
     log_dir = data_dir.parent / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / "launcher.log"
     log_path.write_text(message + "\n", encoding="utf-8")
     error_path = log_dir / "startup-error.html"
+    safe_message = escape(user_message)
+    safe_log_path = escape(str(log_path))
     error_path.write_text(
         "<!doctype html><meta charset='utf-8'><title>获客虾启动失败</title>"
-        f"<h1>获客虾服务未能启动</h1><p>{message}</p>"
-        f"<p>详细日志：<code>{log_path}</code></p>",
+        f"<h1>获客虾服务未能启动</h1><p>{safe_message}</p>"
+        f"<p>完整错误信息已写入日志：<code>{safe_log_path}</code></p>",
         encoding="utf-8",
     )
     return error_path
@@ -133,7 +136,7 @@ def main() -> int:
     try:
         from lead_shrimp.app import main as app_main
     except BaseException:
-        error = _startup_error_file(root, traceback.format_exc())
+        error = _startup_error_file(root, traceback.format_exc(), "服务组件加载失败，请关闭软件后重试；若仍失败请查看日志")
         webbrowser.open(error.as_uri(), new=1)
         return 1
     # A browser is the local UI shell.  It is bound to loopback only; no remote
@@ -143,7 +146,7 @@ def main() -> int:
     try:
         return app_main()
     except BaseException:
-        error = _startup_error_file(root, traceback.format_exc())
+        error = _startup_error_file(root, traceback.format_exc(), "服务启动失败，请关闭软件后重试；若仍失败请查看日志")
         if "--no-browser" not in sys.argv:
             webbrowser.open(error.as_uri(), new=1)
         return 1

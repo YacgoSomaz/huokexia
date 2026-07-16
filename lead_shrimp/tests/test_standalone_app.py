@@ -114,6 +114,20 @@ def test_launcher_records_startup_exceptions_for_pythonw_users() -> None:
     assert "_startup_error_file" in source
 
 
+def test_public_installer_and_startup_page_use_simplified_chinese() -> None:
+    from pathlib import Path
+    from lead_shrimp import launcher
+
+    iss = Path(__file__).parents[1] / "build" / "lead_shrimp_public.iss"
+    installer_source = iss.read_text(encoding="utf-8")
+    launcher_source = __import__("inspect").getsource(launcher._startup_error_file)
+
+    assert 'Name: "chinesesimplified"' in installer_source
+    assert "ChineseSimplified.isl" in installer_source
+    assert "服务启动失败，请查看日志" in launcher_source
+    assert "traceback" not in launcher_source.lower()
+
+
 def test_app_disables_uvicorn_console_log_config_for_pythonw() -> None:
     from lead_shrimp import app
 
