@@ -253,7 +253,6 @@ def test_frontend_exposes_task_oriented_navigation_and_selection_feedback() -> N
 
     assert 'class="today-kicker"' in page
     assert 'class="tab-index"' in page
-    assert 'id="navLeadHint"' in page
     assert 'id="selectionSummary"' in page
     assert ".tabs-caption{" in page
     assert ".lead-selection-summary{" in page
@@ -266,12 +265,25 @@ def test_frontend_starts_with_setup_and_orders_tabs_by_real_workflow() -> None:
 
     add = page.index('data-tab="addTab"')
     works = page.index('data-tab="worksTab"')
-    leads = page.index('data-tab="leadsTab"')
     monitors = page.index('data-tab="monitorsTab"')
-    assert add < works < leads < monitors
+    assert add < works < monitors
+    assert 'data-tab="leadsTab"' not in page
     assert "function chooseInitialTab()" in page
     assert "chooseInitialTab" in page
     assert "function updateWorkflowNav()" in page
+
+
+def test_frontend_keeps_comments_out_of_the_primary_flow_and_opens_them_on_demand() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="openLeads"' in page
+    assert 'id="closeLeads"' in page
+    assert 'class="tab-panel leads-overlay' in page
+    assert 'function openLeadsPanel()' in page
+    assert 'data-step="login"' in page
+    assert 'data-tab="leadsTab"' not in page.split('<nav class="tabs"', 1)[1].split('</nav>', 1)[0]
 
 
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:

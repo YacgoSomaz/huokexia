@@ -30,6 +30,7 @@
     .btn:hover{background:var(--brand-strong);transform:translateY(-1px)}
     .btn.secondary{background:#fff;color:#244366;border-color:#cbd8e9;box-shadow:none}
     .btn.secondary:hover{background:#f6f9fe;border-color:#aebfda}
+    .count-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:5px;padding:0 5px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:11px}
     .btn.ghost{background:#f4f8ff;color:var(--brand);border-color:#cbd8e9;padding:8px 10px;box-shadow:none}
     .btn.ghost:hover{background:#eaf2ff;border-color:#9db9ec}
     .btn.warn{background:var(--amber)}
@@ -75,6 +76,8 @@
     .tab-utility .btn{width:100%;justify-content:center}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
+    .leads-overlay{position:fixed;inset:20px;z-index:18;overflow:auto;box-shadow:0 24px 80px rgba(16,35,63,.25)}
+    body.leads-open{overflow:hidden}
     .main{display:block}
     .stack{display:grid;gap:16px}
     .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
@@ -174,6 +177,7 @@
         </div>
       </div>
       <div class="top-actions">
+        <button id="openLeads" class="btn secondary" type="button">查看评论线索<span id="topLeadCount" class="count-badge">0</span></button>
         <span class="pill"><span id="licenseDot" class="signal"></span><span id="licenseText">正在检查授权</span></span>
         <button id="openLicense" class="btn secondary">卡密激活</button>
       </div>
@@ -225,12 +229,11 @@
     <section class="workspace">
       <nav class="tabs" aria-label="工作区切换">
         <div class="tabs-caption">工作流程</div>
-        <button class="tab-btn active" data-tab="addTab" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>新增监控</b><small>添加主页或视频</small></span></button>
-        <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
-        <button class="tab-btn" data-tab="leadsTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>评论线索</b><small id="navLeadHint">等待加载</small></span></button>
-        <button class="tab-btn" data-tab="monitorsTab" type="button"><span class="tab-index">04</span><span class="tab-copy"><b>监控列表</b><small id="navMonitorHint">等待加载</small></span></button>
+        <button class="tab-btn active" data-step="login" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>登录抖音</b><small id="navLoginHint">先打开浏览器登录</small></span></button>
+        <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>找主页</b><small>粘贴主页链接</small></span></button>
+        <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
         <span class="tab-spacer"></span>
-        <div class="tab-utility"><small>账号状态</small><button id="quickLogin" class="btn secondary" type="button">检查登录</button></div>
+        <div class="tab-utility"><small>高级入口</small><button class="btn secondary" data-tab="monitorsTab" type="button">管理监控账号</button></div>
       </nav>
 
       <section class="main">
@@ -314,13 +317,13 @@
         </section>
       </section>
 
-      <section id="leadsTab" class="tab-panel panel inbox">
-          <div class="head">
-            <div>
-              <h2>评论线索</h2>
-              <div class="lead-selection-summary"><span id="visibleCount">当前显示 0 条</span><span aria-hidden="true">·</span><span>已选 <strong id="selectionSummary" class="selection-count">0</strong> 条</span></div>
-            </div>
-          <button id="exportLeads" class="btn secondary">导出选中（0）</button>
+      <section id="leadsTab" class="tab-panel leads-overlay panel inbox" role="dialog" aria-modal="true" aria-labelledby="leadsTitle">
+        <div class="head">
+          <div>
+            <h2 id="leadsTitle">评论线索</h2>
+            <div class="lead-selection-summary"><span id="visibleCount">当前显示 0 条</span><span aria-hidden="true">·</span><span>已选 <strong id="selectionSummary" class="selection-count">0</strong> 条</span></div>
+          </div>
+          <div class="top-actions"><button id="closeLeads" class="btn secondary" type="button">返回工作台</button><button id="exportLeads" class="btn secondary">导出选中（0）</button></div>
         </div>
         <div class="toolbar lead-toolbar">
           <button id="reloadLeads" class="btn secondary">刷新数据</button>
@@ -403,14 +406,31 @@
       clearTimeout(window.__toast);
       window.__toast=setTimeout(()=>el.className='toast',3400);
     }
+    function setWorkflowActive(id){
+      document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id||btn.dataset.step===id));
+    }
     function switchTab(id){
-      document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id));
+      if(id==='leadsTab'){openLeadsPanel();return}
+      setWorkflowActive(id);
       document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.toggle('active',panel.id===id));
       if(id==='worksTab'&&!state.pendingVideos.length)loadCachedWorks();
     }
+    function openLeadsPanel(){
+      $('leadsTab').classList.add('active');
+      document.body.classList.add('leads-open');
+      renderLeads();
+    }
+    function closeLeadsPanel(){
+      $('leadsTab').classList.remove('active');
+      document.body.classList.remove('leads-open');
+    }
     function chooseInitialTab(){
+      if(!state.loggedIn){
+        document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.remove('active'));
+        setWorkflowActive('login');
+        return;
+      }
       if(!state.monitors.length)switchTab('addTab');
-      else if(allLeads.length)switchTab('leadsTab');
       else switchTab('monitorsTab');
     }
     function updateWorkflowNav(){
@@ -472,6 +492,7 @@
         const ok=Boolean(d.logged_in);
         state.loggedIn=ok;
         $('loginMetric').textContent=ok?'已登录':'未登录';
+        $('navLoginHint').textContent=ok?'已登录，可以找主页':'先打开浏览器登录';
         updatePrimaryAction();
       }catch(e){toast(e.message,true)}
     }
@@ -624,7 +645,9 @@
         return sort==='oldest'?av-bv:bv-av;
       });
       $('leadCount').textContent=allLeads.length;
-      $('navLeadHint').textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
+      $('topLeadCount').textContent=allLeads.length;
+      const navLeadHint=$('navLeadHint');
+      if(navLeadHint)navLeadHint.textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
       updateWorkflowNav();
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
       $('leadList').classList.toggle('range-mode',state.dragSelectMode);
@@ -858,6 +881,7 @@
         const d=await api('/api/comment-leads/login',{method:'POST',body:'{}'});
         if(d.ok)toast('登录态已验证');
         await Promise.all([loadLogin(),loadDiagnosis()]);
+        if(state.loggedIn&&!state.monitors.length)switchTab('addTab');
       }catch(e){toast(e.message,true)}
     }
 
@@ -894,7 +918,8 @@
     $('closeLicense').onclick=()=>$('licenseModal').classList.remove('show');
     $('stepLicenseBtn').onclick=()=>$('licenseModal').classList.add('show');
     $('stepLoginBtn').onclick=openLogin;
-    $('quickLogin').onclick=openLogin;
+    $('openLeads').onclick=openLeadsPanel;
+    $('closeLeads').onclick=closeLeadsPanel;
     $('focusAddBtn').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
     $('reloadMonitors').onclick=loadMonitors;
     $('reloadLeads').onclick=loadLeads;
@@ -931,7 +956,7 @@
     };
     document.addEventListener('pointerup',()=>{state.dragSelecting=false});
     document.addEventListener('pointercancel',()=>{state.dragSelecting=false});
-    document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
+    document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>btn.dataset.step==='login'?openLogin():switchTab(btn.dataset.tab));
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]).then(chooseInitialTab);
   </script>
