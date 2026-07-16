@@ -286,6 +286,20 @@ def test_frontend_keeps_comments_out_of_the_primary_flow_and_opens_them_on_deman
     assert 'data-tab="leadsTab"' not in page.split('<nav class="tabs"', 1)[1].split('</nav>', 1)[0]
 
 
+def test_frontend_exposes_a_sidebar_lead_button_and_cached_monitor_management() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="openLeadsSidebar"' in page
+    assert 'id="sideLeadCount"' in page
+    assert 'leads-shortcut' in page
+    assert "querySelectorAll('[data-tab]')" in page
+    assert 'class="monitor-meta"' in page
+    assert 'works_cached_at' in page
+    assert 'cached_videos.length' in page
+
+
 def test_work_picker_defaults_to_recent_non_pinned_videos() -> None:
     from lead_shrimp.app import frontend_path
 

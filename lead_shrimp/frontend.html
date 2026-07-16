@@ -74,6 +74,8 @@
     .tab-utility{display:grid;gap:7px;padding:8px 0 0}
     .tab-utility small{padding:0 8px;color:#7b8aa0;font-size:11px}
     .tab-utility .btn{width:100%;justify-content:center}
+    .leads-shortcut{background:var(--brand);border-color:var(--brand);color:#fff;min-height:44px;box-shadow:0 8px 18px rgba(37,99,235,.22)}
+    .leads-shortcut:hover{background:var(--brand-strong);border-color:var(--brand-strong);color:#fff}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
     .leads-overlay{position:fixed;inset:20px;z-index:18;overflow:auto;box-shadow:0 24px 80px rgba(16,35,63,.25)}
@@ -93,11 +95,13 @@
     .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
     .monitor-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;max-height:620px;overflow:auto}
     .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:12px;display:grid;gap:11px}
-    .monitor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .monitor-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
     .monitor-identity{display:flex;align-items:center;gap:10px;min-width:0}
     .monitor-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#eaf1ff;color:var(--brand);display:grid;place-items:center;font-weight:900;flex:0 0 auto}
     .monitor-copy{min-width:0;display:grid;gap:6px}
     .monitor strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .monitor-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    .monitor-link{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#50709a;font-size:12px}
     .meta{display:flex;gap:8px;flex-wrap:wrap}
     .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
     .chip.good{background:var(--green-soft);color:var(--green)}
@@ -233,7 +237,11 @@
         <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>找主页</b><small>粘贴主页链接</small></span></button>
         <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
         <span class="tab-spacer"></span>
-        <div class="tab-utility"><small>高级入口</small><button class="btn secondary" data-tab="monitorsTab" type="button">管理监控账号</button></div>
+        <div class="tab-utility">
+          <button id="openLeadsSidebar" class="btn leads-shortcut" type="button">查看评论线索<span id="sideLeadCount" class="count-badge">0</span></button>
+          <small>高级入口</small>
+          <button class="btn secondary" data-tab="monitorsTab" type="button">管理监控账号</button>
+        </div>
       </nav>
 
       <section class="main">
@@ -499,25 +507,31 @@
     function renderMonitors(rows){
       state.monitors=rows;
       $('monitorCount').textContent=rows.length;
-      $('navMonitorHint').textContent=rows.length?`${rows.length} 个账号`:'还没有账号';
       updateWorkflowNav();
       $('monitors').innerHTML=rows.length?rows.map(m=>{
         const title=escapeHtml(m.title||m.author_name||'待识别账号');
         const avatar=escapeHtml(m.author_avatar||m.avatar_url||'');
         const err=String(m.last_error||'').trim();
+        const cached_videos=Array.isArray(m.cached_videos)?m.cached_videos:[];
+        const cachedAt=m.works_cached_at?formatTime(m.works_cached_at):'尚未解析作品';
+        const profileUrl=escapeHtml(m.author_profile_url||m.target_url||m.raw_url||'');
         return `<article class="monitor">
           <div class="monitor-identity">
             ${avatar?`<img class="monitor-avatar" src="${avatar}" alt="">`:'<span class="monitor-avatar" aria-hidden="true">获</span>'}
             <div class="monitor-copy"><strong title="${title}">${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
           </div>
+          <div class="monitor-meta"><span class="chip">已解析 ${cached_videos.length} 个作品</span><span>更新于 ${escapeHtml(cachedAt)}</span></div>
+          <div class="monitor-link" title="${profileUrl}">${profileUrl||'主页链接待补充'}</div>
           <div class="monitor-actions">
             <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
             <button class="btn ghost" data-refresh="${escapeHtml(m.id)}">刷新作品</button>
+            ${profileUrl?`<button class="btn ghost" data-monitor-profile="${profileUrl}">打开主页</button>`:''}
           </div>
         </article>`;
       }).join(''):'<div class="empty">暂无监控对象。粘贴一个抖音主页或视频链接即可开始。</div>';
       document.querySelectorAll('[data-resolve]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.resolve));
       document.querySelectorAll('[data-refresh]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.refresh,true));
+      document.querySelectorAll('[data-monitor-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.monitorProfile,'_blank','noopener'));
       updatePrimaryAction();
     }
     async function loadMonitors(){
@@ -646,6 +660,7 @@
       });
       $('leadCount').textContent=allLeads.length;
       $('topLeadCount').textContent=allLeads.length;
+      $('sideLeadCount').textContent=allLeads.length;
       const navLeadHint=$('navLeadHint');
       if(navLeadHint)navLeadHint.textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
       updateWorkflowNav();
@@ -919,6 +934,7 @@
     $('stepLicenseBtn').onclick=()=>$('licenseModal').classList.add('show');
     $('stepLoginBtn').onclick=openLogin;
     $('openLeads').onclick=openLeadsPanel;
+    $('openLeadsSidebar').onclick=openLeadsPanel;
     $('closeLeads').onclick=closeLeadsPanel;
     $('focusAddBtn').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
     $('reloadMonitors').onclick=loadMonitors;
@@ -956,7 +972,8 @@
     };
     document.addEventListener('pointerup',()=>{state.dragSelecting=false});
     document.addEventListener('pointercancel',()=>{state.dragSelecting=false});
-    document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>btn.dataset.step==='login'?openLogin():switchTab(btn.dataset.tab));
+    document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
+    document.querySelectorAll('.tab-btn[data-step]').forEach(btn=>btn.onclick=openLogin);
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]).then(chooseInitialTab);
   </script>
