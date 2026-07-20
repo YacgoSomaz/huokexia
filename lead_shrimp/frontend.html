@@ -33,6 +33,10 @@
     .count-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:5px;padding:0 5px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:11px}
     .btn.ghost{background:#f4f8ff;color:var(--brand);border-color:#cbd8e9;padding:8px 10px;box-shadow:none}
     .btn.ghost:hover{background:#eaf2ff;border-color:#9db9ec}
+    .btn.danger{background:#fff5f4;color:#b42318;border-color:#f2c7c2;box-shadow:none}
+    .btn.danger:hover{background:#fee4e2;border-color:#eaa39c}
+    .btn.return-workbench{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 7px 16px rgba(37,99,235,.22)}
+    .btn.return-workbench:hover{background:var(--brand-strong);border-color:var(--brand-strong);color:#fff}
     .btn.warn{background:var(--amber)}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
     .hero{display:grid;gap:12px;margin-bottom:14px}
@@ -74,10 +78,16 @@
     .tab-utility{display:grid;gap:7px;padding:8px 0 0}
     .tab-utility small{padding:0 8px;color:#7b8aa0;font-size:11px}
     .tab-utility .btn{width:100%;justify-content:center}
+    .work-collect-action{justify-self:start;min-width:136px;padding-inline:22px}
     .leads-shortcut{background:var(--brand);border-color:var(--brand);color:#fff;min-height:44px;box-shadow:0 8px 18px rgba(37,99,235,.22)}
     .leads-shortcut:hover{background:var(--brand-strong);border-color:var(--brand-strong);color:#fff}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
+    .ai-lab{display:grid;grid-template-columns:220px minmax(0,1fr) 260px;min-height:520px}
+    .ai-agent-nav{padding:18px;border-right:1px solid var(--line,#dbe5f4);background:#f7faff}
+    .ai-agent-nav small{display:block;color:#6380a8;margin:5px 0 16px}.ai-agent{width:100%;text-align:left;border:1px solid #d7e2f1;background:#fff;padding:12px;margin:6px 0;border-radius:6px;color:#17375e;box-shadow:0 1px 2px rgba(34,67,109,.06);transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;cursor:pointer}.ai-agent:hover{background:#f3f7ff;border-color:#8caee5;box-shadow:0 3px 8px rgba(44,94,165,.13);transform:translateY(-1px)}.ai-agent:focus-visible{outline:3px solid #b8cdf2;outline-offset:2px}.ai-agent b,.ai-agent span{display:block}.ai-agent span{font-size:12px;color:#7287a4;margin-top:3px}.ai-agent.active{background:#eaf2ff;border-color:#2f6de1;color:#1554d1;box-shadow:0 3px 10px rgba(38,99,214,.18)}.ai-agent.active span{color:#4d6f9e}
+    .ai-stage{padding:22px;min-width:0}.ai-kicker{font-size:12px;color:#1c68db;font-weight:700}.ai-stage h3{margin:5px 0 6px;font-size:20px}.ai-stage p{margin:0 0 18px;color:#6680a2}.ai-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}.ai-metric{border:1px solid #dbe5f4;border-radius:6px;padding:12px;background:#fff}.ai-metric b{font-size:22px;display:block}.ai-record{padding:12px 0;border-top:1px solid #edf1f7}.ai-record b{display:block}.ai-record span{font-size:13px;color:#617b9c;line-height:1.5}.ai-side{padding:18px;border-left:1px solid var(--line,#dbe5f4);background:#fbfcff}.ai-side h4{margin:0 0 12px}.ai-side .field{margin-bottom:12px}.ai-side button{width:100%;margin-top:8px}
+    @media(max-width:900px){.ai-lab{grid-template-columns:1fr}.ai-agent-nav{border-right:0;border-bottom:1px solid #dbe5f4;display:flex;overflow:auto;padding:10px}.ai-agent{min-width:140px}.ai-side{border-left:0;border-top:1px solid #dbe5f4}.ai-summary{grid-template-columns:1fr 1fr}}
     .leads-overlay{position:fixed;inset:20px;z-index:18;overflow:auto;box-shadow:0 24px 80px rgba(16,35,63,.25)}
     body.leads-open{overflow:hidden}
     .main{display:block}
@@ -95,13 +105,13 @@
     .microcopy{font-size:12px;color:var(--muted);line-height:1.6}
     .monitor-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;max-height:620px;overflow:auto}
     .monitor{border:1px solid #e5ebf4;border-radius:12px;background:#fbfdff;padding:12px;display:grid;gap:11px}
-    .monitor-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .monitor-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .monitor-actions .btn{flex:0 0 auto;padding:8px 12px}
     .monitor-identity{display:flex;align-items:center;gap:10px;min-width:0}
     .monitor-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#eaf1ff;color:var(--brand);display:grid;place-items:center;font-weight:900;flex:0 0 auto}
     .monitor-copy{min-width:0;display:grid;gap:6px}
     .monitor strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .monitor-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:var(--muted);font-size:12px}
-    .monitor-link{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#50709a;font-size:12px}
     .meta{display:flex;gap:8px;flex-wrap:wrap}
     .chip{display:inline-flex;align-items:center;border-radius:999px;background:#f0f5ff;color:#3767c5;padding:4px 8px;font-size:12px}
     .chip.good{background:var(--green-soft);color:var(--green)}
@@ -111,6 +121,13 @@
     .work-loading.show{display:flex}
     .work-loading .spinner{width:18px;height:18px;border:2px solid #d8e6fb;border-top-color:var(--brand);border-radius:50%;animation:work-spin .8s linear infinite;flex:0 0 auto}
     @keyframes work-spin{to{transform:rotate(360deg)}}
+    .comment-progress{display:none;gap:8px;padding:12px 14px;border:1px solid #cfe0fb;border-radius:10px;background:#f4f8ff;color:#315a99}
+    .comment-progress.show{display:grid}
+    .comment-progress-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:800}
+    .comment-progress-track{height:8px;overflow:hidden;border-radius:999px;background:#dce9fb}
+    .comment-progress-bar{width:38%;height:100%;border-radius:999px;background:var(--brand);animation:comment-progress-slide 1.25s ease-in-out infinite}
+    .comment-progress.done .comment-progress-bar{width:100%;animation:none;background:#159570}
+    @keyframes comment-progress-slide{0%{transform:translateX(-110%)}50%{transform:translateX(100%)}100%{transform:translateX(280%)}}
     .work-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid #e1e9f4;border-radius:10px;background:#f8fbff}
     .work-filters label{display:flex;align-items:center;gap:8px;color:#42536d;font-size:13px;font-weight:800}
     .work-filters select{min-width:116px;border:1px solid #cfdceb;border-radius:8px;background:#fff;color:var(--ink);padding:7px 9px}
@@ -118,7 +135,11 @@
     .work-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;max-height:620px;overflow:auto}
     .work{display:grid;grid-template-columns:22px 74px minmax(0,1fr);gap:10px;align-items:start;border:1px solid #e5ebf4;border-radius:12px;padding:10px;background:#fbfdff}
     .work input{width:18px;height:18px;margin-top:26px}
-    .work img{width:74px;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#e9eef7}
+    .work-cover{position:relative;width:74px;aspect-ratio:3/4}
+    .work-cover img{width:100%;height:100%;object-fit:cover;border-radius:8px;background:#e9eef7}
+    .work-new-badge{position:absolute;left:5px;top:5px;padding:3px 6px;border-radius:5px;background:rgba(0,0,0,.72);color:#edf3fb;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap}
+    .work-comment-badge{position:absolute;right:-6px;top:-6px;min-width:21px;height:21px;padding:0 5px;display:grid;place-items:center;border:2px solid #fff;border-radius:999px;background:#e5484d;color:#fff;font-size:11px;font-weight:900;line-height:1;box-shadow:0 2px 6px rgba(136,28,36,.25)}
+    .work-account{margin-bottom:5px;color:#315fc0;font-size:12px;font-weight:800}
     .work-title{font-weight:900;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .inbox{min-width:0}
     .lead-selection-summary{display:flex;align-items:center;gap:8px;margin-top:4px;color:var(--muted);font-size:12px}
@@ -134,7 +155,7 @@
     .selection-tools .btn{padding-inline:11px}
     .search{border:1px solid #d8e2ef;border-radius:9px;padding:9px 11px;outline:0}
     .lead-list{display:grid;max-height:640px;overflow:auto;position:relative}
-    .lead{display:grid;grid-template-columns:30px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 130px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
+    .lead{display:grid;grid-template-columns:30px 110px minmax(170px,.8fr) minmax(270px,1.4fr) 110px 92px 112px;gap:12px;align-items:start;padding:14px 16px;border-bottom:1px solid #edf1f6}
     .lead.drag-target{user-select:none}
     .lead.drag-target:hover{background:#f4f8ff}
     .lead-list.range-mode .lead{padding-left:56px}
@@ -157,8 +178,8 @@
     .diag-check{font-size:12px;border-radius:999px;background:var(--green-soft);color:var(--green);padding:4px 8px}
     .diag-check.warn{background:var(--amber-soft);color:#986308}
     .diag-action{margin-left:auto}
-    .toast{position:fixed;right:24px;bottom:24px;max-width:420px;padding:13px 15px;border-radius:12px;background:#112744;color:#fff;box-shadow:0 16px 40px rgba(16,34,58,.25);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:30}
-    .toast.show{opacity:1;transform:none}
+    .toast{position:fixed;left:50%;top:50%;width:min(calc(100vw - 32px),420px);box-sizing:border-box;padding:13px 15px;border-radius:12px;background:#112744;color:#fff;box-shadow:0 16px 40px rgba(16,34,58,.25);opacity:0;transform:translate(-50%,calc(-50% + 8px));pointer-events:none;transition:.2s;z-index:30}
+    .toast.show{opacity:1;transform:translate(-50%,-50%)}
     .toast.error{background:#a63240}
     .modal{position:fixed;inset:0;background:rgba(14,29,52,.48);display:none;place-items:center;padding:22px;z-index:20}
     .modal.show{display:grid}
@@ -166,7 +187,7 @@
     .dialog h2{font-size:21px;margin-bottom:8px}
     .dialog p{color:var(--muted);line-height:1.65;margin-bottom:18px}
     .dialog-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 1fr 1.5fr 100px 90px 120px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}.lead-toolbar{grid-template-columns:auto minmax(220px,1fr) repeat(2,minmax(128px,1fr))}.date-range,.selection-tools{grid-column:1/-1}}
+    @media(max-width:1180px){.today{grid-template-columns:1fr}.workspace{grid-template-columns:160px minmax(0,1fr)}.tabs{width:160px}.lead{grid-template-columns:30px 100px 1fr 1.5fr 100px 90px 112px}.lead .action-col{grid-column:1/-1}.lead.header .action-col{display:none}.lead-toolbar{grid-template-columns:auto minmax(220px,1fr) repeat(2,minmax(128px,1fr))}.date-range,.selection-tools{grid-column:1/-1}}
     @media(max-width:760px){.app{padding:14px}.topbar,.today-head,.toolbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.metrics,.two{grid-template-columns:1fr}.workspace{display:block}.tabs{width:auto;flex-direction:row;overflow:auto;margin-bottom:12px;position:sticky;top:0;padding:4px;background:var(--canvas);border:1px solid var(--line)}.tabs-caption,.tab-utility,.tab-spacer{display:none}.tab-btn{white-space:nowrap;text-align:center}.tab-copy small{display:none}.lead,.lead.header{grid-template-columns:1fr}.lead.header{display:none}.search{min-width:0;width:100%}.lead-toolbar{display:flex;align-items:stretch}.lead-toolbar>*{width:100%}.date-range,.selection-tools{width:100%}.next-card{min-width:0}.work-list,.monitor-list{grid-template-columns:1fr}.work-filters{align-items:flex-start;flex-direction:column;gap:10px}}
   </style>
 </head>
@@ -181,36 +202,12 @@
         </div>
       </div>
       <div class="top-actions">
-        <button id="openLeads" class="btn secondary" type="button">查看评论线索<span id="topLeadCount" class="count-badge">0</span></button>
         <span class="pill"><span id="licenseDot" class="signal"></span><span id="licenseText">正在检查授权</span></span>
         <button id="openLicense" class="btn secondary">卡密激活</button>
       </div>
     </header>
 
     <section class="hero">
-      <section class="panel today">
-        <div class="today-head">
-          <div>
-            <span class="today-kicker">今日工作</span>
-            <h2 id="todayTitle">今天的线索看板</h2>
-            <p id="todaySubtitle">完成登录后，添加一个抖音主页或视频，系统会把新评论整理成可跟进线索。</p>
-          </div>
-          <button id="primaryAction" class="btn">打开抖音登录</button>
-        </div>
-        <div class="metrics">
-          <div class="metric"><span>待跟进线索</span><b id="leadCount">—</b></div>
-          <div class="metric"><span>监控对象</span><b id="monitorCount">—</b></div>
-          <div class="metric"><span>登录状态</span><b id="loginMetric">—</b></div>
-        </div>
-        <div class="next-card">
-          <div id="jobSummary">
-            <b>准备就绪</b>
-            <small>添加主页后，系统将读取作品并采集所选评论。</small>
-          </div>
-          <strong id="jobCount">0 条</strong>
-        </div>
-      </section>
-
       <section id="setupPanel" class="panel setup" aria-label="使用流程">
         <article id="stepLicense" class="step">
           <span class="step-no">1</span>
@@ -233,14 +230,14 @@
     <section class="workspace">
       <nav class="tabs" aria-label="工作区切换">
         <div class="tabs-caption">工作流程</div>
-        <button class="tab-btn active" data-step="login" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>登录抖音</b><small id="navLoginHint">先打开浏览器登录</small></span></button>
-        <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>找主页</b><small>粘贴主页链接</small></span></button>
+        <button class="tab-btn active" data-step="login" type="button"><span class="tab-index">01</span><span class="tab-copy"><b>登录抖音</b><small id="navLoginHint">请检查抖音登录状态</small></span></button>
+        <button class="tab-btn" data-tab="addTab" type="button"><span class="tab-index">02</span><span class="tab-copy"><b>找对标</b><small>粘贴对标主页</small></span></button>
         <button class="tab-btn" data-tab="worksTab" type="button"><span class="tab-index">03</span><span class="tab-copy"><b>选择作品</b><small id="navWorkHint">确认后再采集</small></span></button>
+        <button class="tab-btn" data-tab="internalTestTab" type="button"><span class="tab-index">试</span><span class="tab-copy"><b>AI 内部测试</b><small>内部测试中</small></span></button>
         <span class="tab-spacer"></span>
         <div class="tab-utility">
           <button id="openLeadsSidebar" class="btn leads-shortcut" type="button">查看评论线索<span id="sideLeadCount" class="count-badge">0</span></button>
-          <small>高级入口</small>
-          <button class="btn secondary" data-tab="monitorsTab" type="button">管理监控账号</button>
+          <button class="btn secondary" data-tab="monitorsTab" type="button">对标账号<span id="competitorCount" class="count-badge">0</span></button>
         </div>
       </nav>
 
@@ -257,8 +254,8 @@
               <textarea id="profileUrl" required placeholder="粘贴抖音主页链接，或单条视频链接"></textarea>
             </div>
             <div class="field">
-              <label for="monitorName">客户/竞品备注</label>
-              <input id="monitorName" placeholder="例如：昆明本地竞品A">
+              <label for="monitorName">客户/对标备注</label>
+              <input id="monitorName" placeholder="例如：昆明本地对标账号A">
             </div>
             <div class="two">
               <div class="field">
@@ -293,7 +290,6 @@
               <h2>选择要采集评论的作品</h2>
               <small id="workPickerMeta">先解析主页，确认作品后再采集评论。</small>
             </div>
-            <button id="collectSelectedWorks" class="btn" type="button">采集选中作品</button>
           </div>
           <div id="workPicker" class="work-picker body">
             <div id="workLoading" class="work-loading" role="status" aria-live="polite">
@@ -301,6 +297,9 @@
               <span id="workLoadingText">正在解析作品，请稍候…</span>
             </div>
             <div class="work-filters" aria-label="作品筛选">
+              <label for="workCompetitorFilter">按对标账号查看作品
+                <select id="workCompetitorFilter"><option value="">全部对标账号</option></select>
+              </label>
               <label for="workAgeFilter">发布时间
                 <select id="workAgeFilter">
                   <option value="7">近 7 天</option>
@@ -319,8 +318,14 @@
                   <option value="2000">2000 条评论</option>
                 </select>
               </label>
+              <button id="refreshWorksInfo" class="btn secondary" type="button">刷新作品信息</button>
             </div>
             <div id="workList" class="work-list"><div class="empty">请先在“新增监控”里解析主页作品。</div></div>
+            <div id="commentProgress" class="comment-progress" role="status" aria-live="polite">
+              <div class="comment-progress-head"><span id="commentProgressText">正在准备采集评论…</span><span id="commentProgressCount">进行中</span></div>
+              <div class="comment-progress-track"><div id="commentProgressBar" class="comment-progress-bar"></div></div>
+            </div>
+            <button id="collectSelectedWorks" class="btn work-collect-action" type="button">采集评论</button>
           </div>
         </section>
       </section>
@@ -331,7 +336,7 @@
             <h2 id="leadsTitle">评论线索</h2>
             <div class="lead-selection-summary"><span id="visibleCount">当前显示 0 条</span><span aria-hidden="true">·</span><span>已选 <strong id="selectionSummary" class="selection-count">0</strong> 条</span></div>
           </div>
-          <div class="top-actions"><button id="closeLeads" class="btn secondary" type="button">返回工作台</button><button id="exportLeads" class="btn secondary">导出选中（0）</button></div>
+          <div class="top-actions"><button id="closeLeads" class="btn return-workbench" type="button">返回工作台</button><button id="exportLeads" class="btn secondary">导出选中（0）</button></div>
         </div>
         <div class="toolbar lead-toolbar">
           <button id="reloadLeads" class="btn secondary">刷新数据</button>
@@ -347,18 +352,17 @@
             <option value="oldest">最早评论在前</option>
           </select>
           <div class="date-range" aria-label="评论日期范围">
-            <input id="leadStartDate" class="search date-input" type="date" aria-label="开始日期">
+            <input id="leadStartDate" class="search date-input" type="date" aria-label="开始日期" onclick="this.showPicker?.()" onfocus="this.showPicker?.()">
             <span>至</span>
-            <input id="leadEndDate" class="search date-input" type="date" aria-label="结束日期">
+            <input id="leadEndDate" class="search date-input" type="date" aria-label="结束日期" onclick="this.showPicker?.()" onfocus="this.showPicker?.()">
           </div>
           <div class="selection-tools">
             <button id="selectLeadsByDate" class="btn secondary" type="button">按日期选择</button>
-            <button id="dragSelectLeads" class="btn secondary" type="button">滑动选择</button>
           </div>
         </div>
         <div id="leadList" class="lead-list">
           <div class="lead header">
-            <span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span>
+            <span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>时间</span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span class="action-col">操作</span>
           </div>
           <div class="empty">暂无线索。请先完成卡密激活和抖音登录。</div>
         </div>
@@ -367,10 +371,11 @@
         </div>
       </section>
 
+      <section id="internalTestTab" class="tab-panel"><section class="panel"><div class="head"><div><h2>AI 内部测试</h2><small>独立任务中心，不影响评论采集、人工筛选与导出。</small></div><span class="chip warn">内部测试中</span></div><div class="ai-lab"><nav class="ai-agent-nav" aria-label="智能体选择"><b>智能体</b><small>选择一个任务查看</small><button class="ai-agent active" data-ai-agent="overview"><b>测试总览</b><span>运行状态与队列</span></button><button class="ai-agent" data-ai-agent="scanner"><b>增量巡检</b><span>发现新作品和新评论</span></button><button class="ai-agent" data-ai-agent="screening"><b>线索筛选</b><span>识别显性与隐性需求</span></button><button class="ai-agent" data-ai-agent="opportunity"><b>机会排序</b><span>给出优先级和建议</span></button></nav><main class="ai-stage" id="internalTestBody"><div class="empty">正在读取测试数据…</div></main><aside class="ai-side" id="internalTestControls"></aside></div></section></section>
       <section id="monitorsTab" class="tab-panel">
         <section class="panel">
           <div class="head">
-            <h2>监控列表</h2>
+            <h2>对标账号</h2>
             <button id="reloadMonitors" class="btn ghost">刷新</button>
           </div>
           <div id="monitors" class="body monitor-list"><div class="empty">暂无监控对象</div></div>
@@ -459,16 +464,6 @@
     }
     function updatePrimaryAction(){
       const licenseReady=state.licensed||!state.licenseRequired;
-      if(!licenseReady){
-        $('primaryAction').textContent='先激活卡密';
-        $('primaryAction').onclick=()=>$('licenseModal').classList.add('show');
-      }else if(!state.loggedIn){
-        $('primaryAction').textContent='打开抖音登录';
-        $('primaryAction').onclick=openLogin;
-      }else{
-        $('primaryAction').textContent='添加监控对象';
-        $('primaryAction').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
-      }
       $('stepLicense').classList.toggle('done',licenseReady);
       $('stepLogin').classList.toggle('done',state.loggedIn);
       $('stepMonitor').classList.toggle('done',(state.monitors||[]).length>0);
@@ -499,14 +494,14 @@
         const d=await api('/api/comment-leads/status');
         const ok=Boolean(d.logged_in);
         state.loggedIn=ok;
-        $('loginMetric').textContent=ok?'已登录':'未登录';
-        $('navLoginHint').textContent=ok?'已登录，可以找主页':'先打开浏览器登录';
+        $('navLoginHint').textContent=ok?'已登录，可以找对标':'请检查抖音登录状态';
         updatePrimaryAction();
       }catch(e){toast(e.message,true)}
     }
     function renderMonitors(rows){
       state.monitors=rows;
-      $('monitorCount').textContent=rows.length;
+      renderWorkAccountFilter();
+      $('competitorCount').textContent=rows.length;
       updateWorkflowNav();
       $('monitors').innerHTML=rows.length?rows.map(m=>{
         const title=escapeHtml(m.title||m.author_name||'待识别账号');
@@ -521,10 +516,9 @@
             <div class="monitor-copy"><strong title="${title}">${title}</strong><span class="chip ${err?'warn':'good'}">${err?'需处理':'正常'}</span></div>
           </div>
           <div class="monitor-meta"><span class="chip">已解析 ${cached_videos.length} 个作品</span><span>更新于 ${escapeHtml(cachedAt)}</span></div>
-          <div class="monitor-link" title="${profileUrl}">${profileUrl||'主页链接待补充'}</div>
           <div class="monitor-actions">
-            <button class="btn secondary" data-resolve="${escapeHtml(m.id)}">选择作品</button>
-            <button class="btn ghost" data-refresh="${escapeHtml(m.id)}">刷新作品</button>
+            <button class="btn secondary" data-refresh="${escapeHtml(m.id)}">采集作品</button>
+            <button class="btn danger" data-monitor-delete="${escapeHtml(m.id)}">停止监控</button>
             ${profileUrl?`<button class="btn ghost" data-monitor-profile="${profileUrl}">打开主页</button>`:''}
           </div>
         </article>`;
@@ -532,7 +526,19 @@
       document.querySelectorAll('[data-resolve]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.resolve));
       document.querySelectorAll('[data-refresh]').forEach(b=>b.onclick=()=>resolveMonitorWorks(b.dataset.refresh,true));
       document.querySelectorAll('[data-monitor-profile]').forEach(b=>b.onclick=()=>window.open(b.dataset.monitorProfile,'_blank','noopener'));
+      document.querySelectorAll('[data-monitor-delete]').forEach(b=>b.onclick=()=>deleteMonitor(b.dataset.monitorDelete));
       updatePrimaryAction();
+    }
+    async function deleteMonitor(id){
+      if(!id||!window.confirm('停止监控这个对标账号？已采集的评论线索会保留。'))return;
+      try{
+        await api('/api/comment-leads/monitors/'+encodeURIComponent(id),{method:'DELETE'});
+        if(state.pendingMonitor&&String(state.pendingMonitor.id)===String(id)){
+          state.pendingMonitor=null;state.pendingVideos=[];renderWorks(null,[]);
+        }
+        await Promise.all([loadMonitors(),loadLeads(),loadDiagnosis()]);
+        toast('已停止监控，历史评论线索已保留');
+      }catch(e){toast(e.message,true)}
     }
     async function loadMonitors(){
       try{const d=await api('/api/comment-leads/monitors');renderMonitors(d.monitors||[])}
@@ -566,6 +572,24 @@
       const stamp=videoTimestamp(v.publish_time||v.create_time);
       return !v.pinned&&stamp>=Date.now()-DEFAULT_WORK_WINDOW_DAYS*86400000;
     }
+    function isZeroCommentWork(v){
+      return v.comment_count===0||String(v.comment_count??'').trim()==='0';
+    }
+    function renderWorkAccountFilter(){
+      const select=$('workCompetitorFilter');
+      if(!select)return;
+      const selected=String(state.pendingMonitor&&state.pendingMonitor.id||select.value||'');
+      select.innerHTML='<option value="">全部对标账号</option>'+(state.monitors||[]).map(m=>`<option value="${escapeHtml(m.id)}">${escapeHtml(m.title||m.author_name||'待识别账号')}</option>`).join('');
+      select.value=(state.monitors||[]).some(m=>String(m.id)===selected)?selected:'';
+    }
+    function selectWorkAccount(id){
+      if(!id){return loadCachedWorks()}
+      const monitor=(state.monitors||[]).find(item=>String(item.id)===String(id));
+      if(!monitor)return;
+      const cached=Array.isArray(monitor.cached_videos)?monitor.cached_videos:[];
+      renderWorks(monitor,cached);
+      if(!cached.length)toast('这个对标账号还没有缓存作品，请在对标账号里点击“采集作品”',true);
+    }
     function renderWorkList(){
       const days=Number($('workAgeFilter').value||DEFAULT_WORK_WINDOW_DAYS);
       const includePinned=$('includePinnedWorks').checked;
@@ -575,18 +599,21 @@
         return (includePinned||!v.pinned)&&(!days||Boolean(stamp)&&stamp>=cutoff);
       });
       const hiddenPinned=state.pendingVideos.filter(v=>v.pinned&&!includePinned).length;
+      const hiddenZeroComments=state.pendingVideos.filter(isZeroCommentWork).length;
       const cachedAt=Number(state.pendingMonitor&&state.pendingMonitor.works_cached_at||0);
       const stale=cachedAt>0&&Date.now()-cachedAt>86400000;
       const staleHint=stale?'超过 1 天未刷新作品，可能有新作品或新评论，请刷新作品或重新采集。':'';
-      $('workPickerMeta').textContent=`共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。${hiddenPinned?`已隐藏 ${hiddenPinned} 条置顶作品。`: '置顶作品已展示并标记，默认不勾选。'} ${staleHint}`;
+      const accountName=state.pendingMonitor?(state.pendingMonitor.title||state.pendingMonitor.author_name||'当前对标账号'):'当前对标账号';
+      $('workPickerMeta').textContent=`${accountName} · 共解析 ${state.pendingVideos.length} 条；当前显示 ${visible.length} 条。${hiddenZeroComments?`已标记 ${hiddenZeroComments} 条评论为 0 的作品，选择后不会采集。`:''} ${hiddenPinned?`已隐藏 ${hiddenPinned} 条置顶作品。`: '置顶作品已展示并标记，默认不勾选。'} ${staleHint}`;
       $('workList').innerHTML=visible.length?visible.map(({v,index})=>`<label class="work">
-        <input type="checkbox" data-work-index="${index}" ${v.selected===true?'checked':''}${v.selected===false?'':defaultWorkSelected(v)?' checked':''}>
-        <img src="${escapeHtml(v.cover_url||'')}" alt="">
+        <input type="checkbox" data-work-index="${index}" ${v.selected===true?'checked':''}>
+        <div class="work-cover"><img src="${escapeHtml(v.cover_url||'')}" alt="">${v.is_new?'<span class="work-new-badge">新视频</span>':''}${Number(v.comment_increase||0)>0?`<span class="work-comment-badge">+${escapeHtml(v.comment_increase)}</span>`:''}</div>
         <div>
+          <div class="work-account">${escapeHtml(accountName)}</div>
           <div class="work-title">${escapeHtml(v.title||'未命名作品')}</div>
           <div class="meta" style="margin-top:8px">
             <span class="chip">点赞 ${escapeHtml(formatNumber(v.like_count))}</span>
-            <span class="chip">评论 ${escapeHtml(formatNumber(v.comment_count))}</span>
+            <span class="chip ${isZeroCommentWork(v)?'warn':''}">${isZeroCommentWork(v)?'评论为 0':'评论 '+escapeHtml(formatNumber(v.comment_count))}</span>
             <span class="chip ${videoTimestamp(v.publish_time||v.create_time)?'':'warn'}">发布 ${escapeHtml(formatVideoDate(v.publish_time||v.create_time))}</span>
             ${v.pinned?'<span class="chip warn">置顶</span>':''}
           </div>
@@ -595,7 +622,9 @@
     }
     function renderWorks(monitor,videos){
       state.pendingMonitor=monitor;
-      state.pendingVideos=videos||[];
+      state.pendingVideos=(videos||[]).map(video=>({...video,selected:false}));
+      renderWorkAccountFilter();
+      if($('workCompetitorFilter')&&monitor)$('workCompetitorFilter').value=String(monitor.id||'');
       $('navWorkHint').textContent=state.pendingVideos.length?`${state.pendingVideos.length} 个作品`:'等待确认';
       updateWorkflowNav();
       $('workAgeFilter').value='0';
@@ -614,10 +643,23 @@
       $('workLoadingText').textContent=text;
       $('resolveWorksBtn').disabled=active;
       $('collectSelectedWorks').disabled=active;
+      $('refreshWorksInfo').disabled=active;
       if(active){
         $('workPickerMeta').textContent='正在读取作品发布日期、互动数据和置顶状态…';
         $('workList').innerHTML='<div class="empty">正在打开主页并获取作品信息，请稍候…</div>';
       }
+    }
+    function setCommentProgress(active,text='正在准备采集评论…',count='进行中',done=false){
+      const panel=$('commentProgress');
+      panel.classList.toggle('show',active);
+      panel.classList.toggle('done',done);
+      $('commentProgressText').textContent=text;
+      $('commentProgressCount').textContent=count;
+    }
+    function finishCommentProgress(text,count){
+      setCommentProgress(true,text,count,true);
+      clearTimeout(window.__commentProgressTimer);
+      window.__commentProgressTimer=setTimeout(()=>setCommentProgress(false),1800);
     }
     async function resolveWorks(payload){
       switchTab('worksTab');
@@ -646,6 +688,11 @@
         toast(e.message,true);
       }
     }
+    async function refreshCurrentWorks(){
+      const monitor=state.pendingMonitor;
+      if(!monitor||!monitor.id){toast('请先选择一个对标账号或解析主页',true);return}
+      await resolveMonitorWorks(monitor.id,true);
+    }
     function renderLeads(){
       const term=$('search').value.trim().toLowerCase();
       const days=Number($('leadAgeFilter').value||0);
@@ -658,15 +705,13 @@
         if(!bv)return -1;
         return sort==='oldest'?av-bv:bv-av;
       });
-      $('leadCount').textContent=allLeads.length;
-      $('topLeadCount').textContent=allLeads.length;
       $('sideLeadCount').textContent=allLeads.length;
       const navLeadHint=$('navLeadHint');
       if(navLeadHint)navLeadHint.textContent=allLeads.length?`${allLeads.length} 条待跟进`:'暂无待跟进';
       updateWorkflowNav();
       $('visibleCount').textContent='当前显示 '+rows.length+' 条';
       $('leadList').classList.toggle('range-mode',state.dragSelectMode);
-      const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span>时间</span><span class="action-col">操作</span></div>';
+      const header='<div class="lead header"><span><input id="selectVisibleLeads" type="checkbox" aria-label="选择当前结果"></span><span>时间</span><span>评论人</span><span>评论内容</span><span>标签</span><span>IP属地</span><span class="action-col">操作</span></div>';
       if(!rows.length){
         $('leadList').innerHTML=header+'<div class="empty">没有匹配的线索。换个关键词，或添加新的监控对象。</div>';
         bindLeadSelection([]);
@@ -675,11 +720,11 @@
       const rangeRail=state.dragSelectMode?`<div id="leadRangeRail" class="lead-range-rail"><div id="leadRangeSlider" class="lead-range-slider" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="${Math.max(0,rows.length-1)}" aria-valuenow="${Math.min(state.rangeEnd,Math.max(0,rows.length-1))}" aria-label="拖动选择评论范围" title="向下拖动选择从第一条到当前位置的评论"><div class="lead-range-track"></div><button id="leadRangeThumb" class="lead-range-thumb" type="button" tabindex="-1" aria-hidden="true"></button></div></div>`:'';
       $('leadList').innerHTML=rangeRail+header+rows.map(x=>`<article class="lead ${state.dragSelectMode?'drag-target':''}" data-lead-row="${escapeHtml(x.lead_id||'')}">
         <div><input type="checkbox" data-lead-id="${escapeHtml(x.lead_id||'')}"${selectedLeadIds.has(String(x.lead_id||''))?' checked':''} aria-label="选择${escapeHtml(x.commenter_nickname||'抖音用户')}"></div>
+        <div class="subtle">${escapeHtml(formatTime(x.create_time))}</div>
         <div><div class="person" title="${escapeHtml(x.commenter_nickname||'抖音用户')}">${escapeHtml(x.commenter_nickname||'抖音用户')}</div></div>
         <div class="comment">${escapeHtml(x.content||'')}</div>
         <div><span class="tag">${escapeHtml(x.ai_label||x.status||'待跟进')}</span></div>
         <div>${escapeHtml(x.comment_ip_location||'未知')}</div>
-        <div class="subtle">${escapeHtml(formatTime(x.create_time))}</div>
         <div class="action-col">${x.commenter_profile_url?`<button class="btn secondary" data-profile="${escapeHtml(x.commenter_profile_url)}">打开主页</button>`:'<span class="subtle">无主页</span>'}</div>
       </article>`).join('');
       if(state.dragSelectMode)applyRangeToRows(rows,state.rangeEnd);
@@ -834,11 +879,11 @@
       try{const d=await api('/api/comment-leads/leads');allLeads=d.leads||[];renderLeads()}
       catch(e){toast(e.message,true)}
     }
+    function renderInternalAgent(d){const agent=state.aiAgent||'overview',groups=d.groups||[],tasks=d.tasks||[],scan=d.daily_scan||{};document.querySelectorAll('[data-ai-agent]').forEach(b=>b.classList.toggle('active',b.dataset.aiAgent===agent));const names={overview:['测试总览','把测试任务、待分析评论和同人顾虑放在一个入口。'],scanner:['增量巡检','只检查新作品或评论增长作品。'],screening:['线索筛选','先判断评论背后的居住与置业需求。'],opportunity:['机会排序','只对已保留线索生成跟进优先级。']};const [title,desc]=names[agent];const records=agent==='scanner'?tasks:agent==='overview'?groups:groups.filter(g=>g.comments.some(c=>c.lead_id));$('internalTestBody').innerHTML=`<div class="ai-kicker">${agent==='overview'?'测试控制台':'智能体工作台'}</div><h3>${title}</h3><p>${desc}</p><div class="ai-summary"><div class="ai-metric"><span>同人聚合</span><b>${groups.length}</b></div><div class="ai-metric"><span>测试任务</span><b>${tasks.length}</b></div><div class="ai-metric"><span>已选评论</span><b>${selectedLeadIds.size}</b></div></div>`+(records.length?records.slice(0,8).map(x=>`<div class="ai-record"><b>${escapeHtml(x.commenter_nickname||x.kind||'巡检任务')}</b><span>${escapeHtml(x.error||((x.comments||[]).map(c=>c.content).join('；')||'等待执行'))}</span></div>`).join(''):'<div class="empty">当前没有可显示的测试任务。</div>');$('internalTestControls').innerHTML=agent==='scanner'?`<h4>巡检设置</h4><div class="field"><label><input id="internalScheduleEnabled" type="checkbox" ${scan.enabled?'checked':''}> 每日自动巡检</label></div><div class="field"><input id="internalScheduleTime" type="time" value="${escapeHtml(scan.time||'08:00')}"></div><button id="saveInternalSchedule" class="btn secondary">保存设置</button><button id="runInternalDailyScan" class="btn">立即巡检</button>`:agent==='screening'||agent==='opportunity'?`<h4>${agent==='screening'?'筛选':'排序'}范围</h4><p class="microcopy">从评论线索中勾选不超过 50 条评论后运行。</p><button id="runAiOnSelected" class="btn">运行${agent==='screening'?'两阶段分析':'机会排序'}</button>`:`<h4>测试状态</h4><p class="microcopy">所有结果均为内部测试，不会自动私信。</p>`;bindInternalControls()}
+    function bindInternalControls(){const save=$('saveInternalSchedule');if(save)save.onclick=async()=>{try{await api('/api/comment-leads/internal-test/schedule',{method:'POST',body:JSON.stringify({enabled:$('internalScheduleEnabled').checked,time:$('internalScheduleTime').value})});toast('巡检设置已保存')}catch(e){toast(e.message,true)}};const scan=$('runInternalDailyScan');if(scan)scan.onclick=async()=>{try{toast('正在巡检');await api('/api/comment-leads/internal-test/run-daily-scan',{method:'POST',body:'{}'});await Promise.all([loadInternalTest(),loadLeads(),loadMonitors()]);toast('巡检完成')}catch(e){toast(e.message,true)}};const analyze=$('runAiOnSelected');if(analyze)analyze.onclick=async()=>{if(!selectedLeadIds.size){toast('请先选择评论',true);return}try{const d=await api('/api/comment-leads/internal-test/analyze',{method:'POST',body:JSON.stringify({lead_ids:Array.from(selectedLeadIds).slice(0,50),business_context:{offer:'昆明楼盘咨询、教育与生活配套'}})});toast(`已分析 ${d.processed||0} 条`);await Promise.all([loadLeads(),loadInternalTest()])}catch(e){toast(e.message,true)}}}
+    async function loadInternalTest(){try{renderInternalAgent(await api('/api/comment-leads/internal-test/overview'))}catch(e){$('internalTestBody').innerHTML='<div class="empty">测试数据读取失败：'+escapeHtml(e.message)+'</div>'}}
     function setJob(title,detail,count){
-      $('jobSummary').innerHTML=`<b>${escapeHtml(title)}</b><small>${escapeHtml(detail)}</small>`;
-      $('jobCount').textContent=count;
-      $('todayTitle').textContent=title;
-      $('todaySubtitle').textContent=detail;
+      state.lastJob={title,detail,count};
     }
     function renderDiagnosis(d){
       const checks=(d.checks||[]).map(x=>`<span class="diag-check ${x.ok?'':'warn'}">${x.ok?'✓':'!'} ${escapeHtml(x.label)}：${escapeHtml(x.detail)}</span>`).join('');
@@ -847,8 +892,8 @@
       if(action)action.onclick=()=>{
         if(action.dataset.diagnosisAction==='login')openLogin();
         else if(action.dataset.diagnosisAction==='retry'){
-          const first=document.querySelector('[data-resolve]');
-          if(first)resolveMonitorWorks(first.dataset.resolve);
+          const first=document.querySelector('[data-refresh]');
+          if(first)resolveMonitorWorks(first.dataset.refresh,true);
         }else if(action.dataset.diagnosisAction==='monitor'){switchTab('addTab');$('profileUrl').focus();}
       };
     }
@@ -875,16 +920,21 @@
       const selected=Array.from(document.querySelectorAll('[data-work-index]:checked')).map(input=>state.pendingVideos[Number(input.dataset.workIndex)]).filter(Boolean);
       if(!monitor.id){toast('请先解析主页作品',true);return}
       if(!selected.length){toast('请至少选择一个作品',true);return}
+      const zeroCommentWorks=selected.filter(isZeroCommentWork);
+      if(zeroCommentWorks.length){toast(`${zeroCommentWorks.length} 个作品评论为 0，已阻止采集；请刷新作品信息后再试`,true);return}
       const commentLimit=Number($('workCommentLimit').value||500);
+      setCommentProgress(true,`正在采集 ${selected.length} 个作品的评论…`,`每条最多 ${commentLimit} 条`);
       setJob('正在采集评论',`已选择 ${selected.length} 条作品，每条最多 ${commentLimit} 条评论。`,'进行中');
       try{
         const d=await api('/api/comment-leads/run',{method:'POST',body:JSON.stringify({monitor_id:monitor.id,videos:selected,max_comments:commentLimit})});
         const partial=Boolean(d.error);
+        finishCommentProgress(partial?'采集部分完成':'评论采集完成',`新增 ${d.inserted||0} 条`);
         setJob(partial?'部分完成':'采集完成',`本次读取 ${d.captured||0} 条，新增 ${d.inserted||0} 条线索。${partial?' '+d.error:''}`,`${d.captured||0} 条`);
         toast(partial?'已保存已采集数据，剩余内容请登录后重试':'采集完成');
         switchTab('leadsTab');
         await Promise.all([loadLeads(),loadMonitors(),loadDiagnosis(monitor.id)]);
       }catch(e){
+        finishCommentProgress('评论采集失败','请重试');
         setJob('采集未完成',e.message,'请重试');
         toast(e.message,true);
         await loadDiagnosis(monitor.id);
@@ -892,6 +942,8 @@
     }
     async function openLogin(){
       try{
+        await loadLogin();
+        if(state.loggedIn){toast('抖音已登录，无需重复打开登录窗口');return}
         toast('已打开登录窗口，请完成登录后回到这里。');
         const d=await api('/api/comment-leads/login',{method:'POST',body:'{}'});
         if(d.ok)toast('登录态已验证');
@@ -933,15 +985,16 @@
     $('closeLicense').onclick=()=>$('licenseModal').classList.remove('show');
     $('stepLicenseBtn').onclick=()=>$('licenseModal').classList.add('show');
     $('stepLoginBtn').onclick=openLogin;
-    $('openLeads').onclick=openLeadsPanel;
     $('openLeadsSidebar').onclick=openLeadsPanel;
     $('closeLeads').onclick=closeLeadsPanel;
     $('focusAddBtn').onclick=()=>{switchTab('addTab');$('profileUrl').focus()};
     $('reloadMonitors').onclick=loadMonitors;
     $('reloadLeads').onclick=loadLeads;
     $('collectSelectedWorks').onclick=runSelectedWorks;
+    $('refreshWorksInfo').onclick=refreshCurrentWorks;
     $('workAgeFilter').onchange=renderWorkList;
     $('includePinnedWorks').onchange=renderWorkList;
+    $('workCompetitorFilter').onchange=()=>selectWorkAccount($('workCompetitorFilter').value);
     $('exportLeads').onclick=async()=>{
       if(!selectedLeadIds.size){toast('请先选择要导出的高价值客户',true);return}
       try{
@@ -949,7 +1002,7 @@
         if(!response.ok){let detail='导出失败';try{detail=(await response.json()).detail||detail}catch(_){}throw new Error(detail)}
         const blob=await response.blob();
         const link=document.createElement('a');
-        link.href=URL.createObjectURL(blob);link.download='高价值客户.csv';link.click();
+        link.href=URL.createObjectURL(blob);link.download='高价值客户.xlsx';link.click();
         setTimeout(()=>URL.revokeObjectURL(link.href),1000);
         toast(`已导出 ${selectedLeadIds.size} 条高价值客户`);
       }catch(e){toast(e.message,true)}
@@ -960,19 +1013,10 @@
     $('leadStartDate').onchange=renderLeads;
     $('leadEndDate').onchange=renderLeads;
     $('selectLeadsByDate').onclick=selectLeadsByDate;
-    $('dragSelectLeads').classList.add('active');
-    $('dragSelectLeads').textContent='滑动选择已开启';
-    $('dragSelectLeads').onclick=()=>{
-      state.dragSelectMode=!state.dragSelectMode;
-      if(state.dragSelectMode){state.rangeEnd=0;state.rangeExcludedIds.clear()}
-      else state.rangeEnd=0;
-      $('dragSelectLeads').classList.toggle('active',state.dragSelectMode);
-      $('dragSelectLeads').textContent=state.dragSelectMode?'滑动选择已开启':'滑动选择';
-      renderLeads();
-    };
     document.addEventListener('pointerup',()=>{state.dragSelecting=false});
     document.addEventListener('pointercancel',()=>{state.dragSelecting=false});
-    document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>switchTab(btn.dataset.tab));
+    document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{switchTab(btn.dataset.tab);if(btn.dataset.tab==='internalTestTab')loadInternalTest()});
+    document.querySelectorAll('[data-ai-agent]').forEach(btn=>btn.onclick=()=>{state.aiAgent=btn.dataset.aiAgent;loadInternalTest()});
     document.querySelectorAll('.tab-btn[data-step]').forEach(btn=>btn.onclick=openLogin);
 
     Promise.all([loadLicense(),loadLogin(),loadMonitors(),loadLeads(),loadDiagnosis()]).then(chooseInitialTab);

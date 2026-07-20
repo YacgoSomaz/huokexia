@@ -124,6 +124,9 @@ def wait_for_service_and_open(port: int, *, timeout_sec: float = 30, poll_sec: f
 def main() -> int:
     root = _install_root()
     os.environ.setdefault("LEADSHRIMP_STANDALONE", "1")
+    bundled_browsers = root / "ms-playwright"
+    if bundled_browsers.is_dir():
+        os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(bundled_browsers))
     os.environ.setdefault("LEADSHRIMP_DATA_DIR", str(Path(os.environ.get("LOCALAPPDATA") or root) / "LeadShrimp" / "data"))
     os.environ.setdefault("LEADSHRIMP_ASSET_DIR", str(root / "assets"))
     try:

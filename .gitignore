@@ -17,6 +17,9 @@ release/
 *.sqlite3
 *.log
 *.exe
+ai_config.json
+comment_leads.json
+short_video_profiles.json
 nuitka-crash-report.xml
 
 # Secrets, certificates and local configuration

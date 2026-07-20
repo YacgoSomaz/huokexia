@@ -128,6 +128,161 @@ def test_public_installer_and_startup_page_use_simplified_chinese() -> None:
     assert "traceback" not in launcher_source.lower()
 
 
+def test_public_build_bundles_playwright_chromium_fallback() -> None:
+    from pathlib import Path
+
+    build_source = (Path(__file__).parents[1] / "build" / "build_public_release.ps1").read_text(encoding="utf-8")
+    launcher_source = __import__("inspect").getsource(__import__("lead_shrimp.launcher", fromlist=["main"]).main)
+
+    assert "PLAYWRIGHT_BROWSERS_PATH" in build_source
+    assert "playwright install chromium" in build_source
+    assert "PLAYWRIGHT_BROWSERS_PATH" in launcher_source
+
+
+def test_browser_launch_error_keeps_attempt_details() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads._launch_comment_context)
+
+    assert "attempt_errors" in source
+    assert "msedge" in source
+    assert "chromium" in source
+
+
+def test_public_installer_handles_running_app_and_locked_files() -> None:
+    from pathlib import Path
+
+    iss = Path(__file__).parents[1] / "build" / "lead_shrimp_public.iss"
+    installer_source = iss.read_text(encoding="utf-8")
+
+    assert "CloseApplications=yes" in installer_source
+    assert "RestartApplications=no" in installer_source
+    assert "CloseApplicationsFilter=" in installer_source
+    assert "python\\pythonw.exe" in installer_source
+    assert "node.exe" in installer_source
+
+
+def test_monitor_api_supports_delete_without_deleting_historical_leads() -> None:
+    from pipeline import comment_leads
+    from lead_shrimp import app as app_module
+
+    store = {
+        "version": 1,
+        "monitors": [{"id": "monitor-a", "title": "账号 A"}, {"id": "monitor-b"}],
+        "leads": [{"lead_id": "lead-a", "monitor_id": "monitor-a"}],
+        "jobs": [{"id": "job-a", "monitor_id": "monitor-a"}],
+    }
+    saved: list[dict] = []
+    monkeypatch = __import__("pytest").MonkeyPatch()
+    try:
+        monkeypatch.setattr(comment_leads, "load_store", lambda: store)
+        monkeypatch.setattr(comment_leads, "save_store", lambda value: saved.append(value))
+        response = app_module.api_comment_leads_delete_monitor("monitor-a")
+    finally:
+        monkeypatch.undo()
+    assert response.body == b'{"ok":true,"deleted":true,"monitor_id":"monitor-a"}'
+    assert [row["id"] for row in store["monitors"]] == ["monitor-b"]
+    assert store["leads"] == [{"lead_id": "lead-a", "monitor_id": "monitor-a"}]
+    assert store["jobs"] == []
+    assert saved
+
+
+def test_login_endpoint_short_circuits_when_saved_login_is_valid(monkeypatch) -> None:
+    from pipeline import comment_leads
+    from lead_shrimp import app as app_module
+
+    monkeypatch.setattr(comment_leads, "login_status", lambda: {"logged_in": True, "browser": "msedge"})
+    monkeypatch.setattr(comment_leads, "open_login_browser", lambda **_: (_ for _ in ()).throw(AssertionError("must not open")))
+    response = app_module.api_comment_leads_login({})
+    assert response.status_code == 200
+    assert __import__("json").loads(response.body)["already_logged_in"] is True
+
+
+def test_login_and_capture_window_arguments_restore_login_window(monkeypatch) -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads._launch_comment_context)
+    assert "--window-position=80,80" in source
+    assert "--window-size=1365,768" in source
+    assert "--window-position=-32000,-32000" in source
+    assert "background" in source
+
+
+def test_login_browser_triggers_the_visible_scan_login_panel() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads._trigger_login_panel)
+    assert "扫码登录" in source
+    assert "登录" in source
+    assert "placeholder" in source
+    assert "keyboard.press(\"Enter\")" in source
+
+
+def test_persistent_profile_login_cookies_are_not_overwritten_by_shared_cache() -> None:
+    from pipeline import comment_leads
+
+    source = __import__("inspect").getsource(comment_leads._seed_shared_jar_if_needed)
+    assert "_context_cookie_jar(context)" in source
+    assert "short_video._has_douyin_login_cookie" in source
+    assert "context.add_cookies" in source
+
+
+def test_frontend_does_not_reopen_login_window_when_already_logged_in() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert "抖音已登录，无需重复打开登录窗口" in page
+    assert "data-monitor-delete" in page
+    assert "/api/comment-leads/monitors/" in page
+
+
+def test_frontend_uses_competitor_accounts_label_without_advanced_entry() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert "对标账号" in page
+    assert "高级入口" not in page
+    assert "管理监控账号" not in page
+
+
+def test_frontend_places_lead_time_before_commenter_name() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert '<span>时间</span><span>评论人</span>' in page
+    assert page.index("formatTime(x.create_time)") < page.index('class="person"')
+
+
+def test_frontend_improves_date_picker_and_primary_return_action() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert "showPicker" in page
+    assert 'id="dragSelectLeads"' not in page
+    assert 'class="btn return-workbench"' in page
+
+
+def test_frontend_removes_dashboard_metrics_and_keeps_status_in_workflow() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert "今天的线索看板" not in page
+    assert 'id="loginMetric"' not in page
+    assert 'id="competitorCount"' in page
+    assert 'id="sideLeadCount"' in page
+    assert "请检查抖音登录状态" in page
+
+
+def test_competitor_cards_are_compact_and_use_collect_works_action() -> None:
+    from pathlib import Path
+
+    page = (Path(__file__).parents[1] / "frontend.html").read_text(encoding="utf-8")
+    assert "monitor-link" not in page
+    assert "选择作品</button>" not in page
+    assert "采集作品</button>" in page
+    assert ".monitor-actions{display:flex" in page
+
+
 def test_app_disables_uvicorn_console_log_config_for_pythonw() -> None:
     from lead_shrimp import app
 
@@ -279,7 +434,6 @@ def test_frontend_exposes_task_oriented_navigation_and_selection_feedback() -> N
 
     page = frontend_path().read_text(encoding="utf-8")
 
-    assert 'class="today-kicker"' in page
     assert 'class="tab-index"' in page
     assert 'id="selectionSummary"' in page
     assert ".tabs-caption{" in page
@@ -306,7 +460,6 @@ def test_frontend_keeps_comments_out_of_the_primary_flow_and_opens_them_on_deman
 
     page = frontend_path().read_text(encoding="utf-8")
 
-    assert 'id="openLeads"' in page
     assert 'id="closeLeads"' in page
     assert 'class="tab-panel leads-overlay' in page
     assert 'function openLeadsPanel()' in page
@@ -437,6 +590,10 @@ def test_frontend_has_lead_time_filters_and_cached_work_refresh() -> None:
 
 
 def test_selected_lead_export_only_accepts_existing_ids(tmp_path, monkeypatch) -> None:
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
     from lead_shrimp import app as app_module
 
     export_dir = tmp_path / "exports"
@@ -455,8 +612,48 @@ def test_selected_lead_export_only_accepts_existing_ids(tmp_path, monkeypatch) -
     )
 
     assert response.status_code == 200
-    assert "高价值" in response.content.decode("utf-8-sig")
-    assert "普通" not in response.content.decode("utf-8-sig")
+    values = list(load_workbook(BytesIO(response.content)).active.values)
+    assert any("高价值" in row for row in values)
+    assert not any("普通" in row for row in values)
+
+
+def test_selected_lead_export_is_a_compact_chinese_xlsx(tmp_path, monkeypatch) -> None:
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    from lead_shrimp import app as app_module
+
+    export_dir = tmp_path / "exports"
+    store_path = tmp_path / "leads.json"
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_JSON", store_path)
+    monkeypatch.setattr(app_module.comment_leads.config, "COMMENT_LEADS_EXPORT_DIR", export_dir)
+    store_path.write_text(
+        '{"version": 1, "monitors": [], "leads": ['
+        '{"lead_id":"lead-a","create_time":1735498402,"commenter_nickname":"张三",'
+        '"content":"想了解价格和位置","comment_ip_location":"云南",'
+        '"commenter_profile_url":"https://www.douyin.com/user/sec-a","status":"待联系"}'
+        '], "jobs": []}',
+        encoding="utf-8",
+    )
+
+    response = TestClient(app_module.app).post(
+        "/api/comment-leads/export", json={"lead_ids": ["lead-a"]}
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert response.headers["content-disposition"].endswith(".xlsx")
+    workbook = load_workbook(BytesIO(response.content))
+    sheet = workbook.active
+    assert [cell.value for cell in sheet[1]] == ["评论时间", "评论人", "评论内容", "评论人IP", "评论人主页", "联系状态"]
+    assert [cell.value for cell in sheet[2]][1:] == ["张三", "想了解价格和位置", "云南", "https://www.douyin.com/user/sec-a", "待联系"]
+    assert sheet.column_dimensions["A"].width >= 18
+    assert sheet.column_dimensions["C"].width >= 40
+    assert sheet.row_dimensions[2].height >= 30
+    assert sheet.freeze_panes == "A2"
 
 
 def test_frontend_supports_selective_lead_export() -> None:
@@ -505,6 +702,198 @@ def test_cached_works_restore_after_refresh_and_warn_after_one_day() -> None:
     assert "cached_videos" in page
 
 
+def test_profile_work_refresh_marks_new_videos_and_comment_increase() -> None:
+    from pipeline import comment_leads
+
+    current = [
+        {"id": "new", "comment_count": 4},
+        {"id": "old", "comment_count": 18},
+    ]
+    previous = [{"id": "old", "comment_count": 12}]
+
+    marked = comment_leads.annotate_profile_video_changes(current, previous)
+
+    assert marked[0]["is_new"] is True
+    assert marked[0]["comment_increase"] == 4
+    assert marked[1]["is_new"] is False
+    assert marked[1]["comment_increase"] == 6
+
+
+def test_work_picker_supports_competitor_account_filter_and_change_badges() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="workCompetitorFilter"' in page
+    assert "按对标账号查看作品" in page
+    assert "work-new-badge" in page
+    assert "新视频" in page
+    assert "work-comment-badge" in page
+    assert "comment_increase" in page
+
+
+def test_work_picker_uses_comment_collection_action_with_progress_feedback() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'id="collectSelectedWorks"' in page
+    assert '>采集评论<' in page
+    assert 'id="commentProgress"' in page
+    assert 'id="commentProgressBar"' in page
+    assert "setCommentProgress(true" in page
+    assert "setCommentProgress(false" in page
+
+
+def test_work_picker_shows_zero_comment_works_but_blocks_collection() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert "comment_count===0" in page
+    assert "评论为 0" in page
+    assert "请刷新作品信息后再试" in page
+    assert 'id="refreshWorksInfo"' in page
+
+
+def test_profile_work_count_defaults_to_five_and_caps_at_twenty() -> None:
+    from lead_shrimp.app import frontend_path
+    from lead_shrimp import app as app_module
+    from pipeline import comment_leads
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert '<option value="5">5 条</option>' in page
+    assert '<option value="20">20 条</option>' in page
+    assert 'maximum=20' in __import__("inspect").getsource(app_module.api_comment_leads_profile_videos)
+    assert 'min(int(max_videos or 5), 20)' in __import__("inspect").getsource(comment_leads.resolve_profile_works)
+
+
+def test_ingested_comment_keeps_a_minimal_video_context_snapshot(monkeypatch) -> None:
+    from pipeline import comment_leads
+
+    store = {"version": 1, "monitors": [], "leads": [], "jobs": []}
+    monkeypatch.setattr(comment_leads, "load_store", lambda: store)
+    monkeypatch.setattr(comment_leads, "save_store", lambda _value: None)
+
+    comment_leads.ingest_rows(
+        [{"comment_id": "comment-1", "aweme_id": "video-1", "content": "附近有公园吗"}],
+        monitor_id="monitor-1",
+        video_context={"id": "video-1", "title": "昆明精装现房", "publish_time": 123, "like_count": 8, "comment_count": 3, "pinned": False},
+    )
+
+    assert store["leads"][0]["video_context"] == {
+        "id": "video-1", "title": "昆明精装现房", "publish_time": 123,
+        "like_count": 8, "comment_count": 3, "pinned": False,
+    }
+
+
+def test_same_commenter_leads_are_grouped_with_all_concerns() -> None:
+    from pipeline import comment_leads
+
+    groups = comment_leads.group_leads_by_commenter([
+        {"lead_id": "a", "commenter_sec_uid": "u1", "commenter_nickname": "甲", "content": "附近有公园吗", "create_time": 100},
+        {"lead_id": "b", "commenter_sec_uid": "u1", "commenter_nickname": "甲", "content": "孩子怎么上学", "create_time": 200},
+        {"lead_id": "c", "commenter_sec_uid": "u2", "commenter_nickname": "乙", "content": "多少钱一平", "create_time": 150},
+    ])
+
+    assert [group["commenter_key"] for group in groups] == ["u1", "u2"]
+    assert groups[0]["comment_count"] == 2
+    assert [item["content"] for item in groups[0]["comments"]] == ["孩子怎么上学", "附近有公园吗"]
+
+
+def test_internal_test_api_is_isolated_from_production_lead_routes(monkeypatch) -> None:
+    from lead_shrimp import app as app_module
+
+    monkeypatch.setattr(app_module.comment_leads, "list_internal_test_overview", lambda: {"mode": "internal_test", "tasks": [], "groups": []})
+    response = TestClient(app_module.app).get("/api/comment-leads/internal-test/overview")
+
+    assert response.status_code == 200
+    assert response.json()["mode"] == "internal_test"
+
+
+def test_frontend_has_an_internal_test_tab_without_replacing_production_flow() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert 'data-tab="internalTestTab"' in page
+    assert 'id="internalTestTab"' in page
+    assert '内部测试中' in page
+    assert 'internal-test/overview' in page
+    assert 'data-ai-agent="overview"' in page
+    assert 'data-ai-agent="scanner"' in page
+    assert 'data-ai-agent="screening"' in page
+    assert 'data-ai-agent="opportunity"' in page
+    assert 'function renderInternalAgent' in page
+
+
+def test_frontend_renders_ai_agent_choices_as_clear_button_options() -> None:
+    from lead_shrimp.app import frontend_path
+
+    page = frontend_path().read_text(encoding="utf-8")
+
+    assert ".ai-agent{width:100%;text-align:left;border:1px solid" in page
+    assert ".ai-agent:hover{" in page
+    assert ".ai-agent.active{background:#eaf2ff" in page
+
+
+def test_internal_daily_scan_only_collects_changed_videos(monkeypatch) -> None:
+    from pipeline import comment_leads
+
+    store = {"version": 1, "monitors": [{"id": "m1", "target_type": "profile", "target_url": "https://example.test/user/a", "max_videos": 5, "max_comments": 100}], "leads": [], "jobs": [], "internal_test_tasks": []}
+    monkeypatch.setattr(comment_leads, "load_store", lambda: store)
+    monkeypatch.setattr(comment_leads, "save_store", lambda _value: None)
+    monkeypatch.setattr(comment_leads, "resolve_profile_works", lambda *_args, **_kwargs: {"videos": [{"id": "v-new", "url": "https://example.test/video/v-new", "is_new": True, "comment_count": 2}, {"id": "v-old", "url": "https://example.test/video/v-old", "comment_increase": 0, "comment_count": 4}]})
+    captured: list[list[str]] = []
+    monkeypatch.setattr(comment_leads, "run_selected_videos", lambda _mid, videos, **_kwargs: captured.append([v["id"] for v in videos]) or {"captured": 2, "inserted": 2, "error": ""})
+
+    result = comment_leads.run_internal_daily_scan()
+
+    assert result["monitors"] == 1
+    assert captured == [["v-new"]]
+    assert store["internal_test_tasks"][0]["kind"] == "daily_incremental_scan"
+
+
+def test_ai_pipeline_validates_results_before_writing_to_leads(monkeypatch) -> None:
+    from pipeline import lead_ai
+
+    leads = [{"lead_id": "l1", "content": "附近有公园吗", "create_time": 1, "comment_ip_location": "云南", "video_context": {"title": "昆明现房"}}]
+    replies = iter([
+        '{"schema_version":"1.0","results":[{"lead_id":"l1","keep":true,"intent_level":"medium","intent_tags":["生活配套"],"summary":"关注公园配套。","reason":"评论询问附近公园。","confidence":0.8,"needs_human_review":false}]}',
+        '{"schema_version":"1.0","results":[{"lead_id":"l1","priority":"P2","follow_up_channel":"抖音私信","recommended_action":"72小时内跟进","opening_message":"您更关注公园还是通勤？","rationale":"存在生活配套关注。","risks":[],"confidence":0.75,"needs_human_review":false}]}'
+    ])
+    monkeypatch.setattr(lead_ai, "_complete_json", lambda *_args, **_kwargs: next(replies))
+
+    result = lead_ai.analyze_leads(leads, business_context={"offer": "昆明现房"})
+
+    assert result["processed"] == 1
+    assert leads[0]["ai"]["screening"]["intent_tags"] == ["生活配套"]
+    assert leads[0]["ai"]["opportunity"]["priority"] == "P2"
+
+
+def test_ai_pipeline_rejects_unknown_or_invalid_results(monkeypatch) -> None:
+    from pipeline import lead_ai
+
+    monkeypatch.setattr(lead_ai, "_complete_json", lambda *_args, **_kwargs: '{"schema_version":"1.0","results":[{"lead_id":"unknown","keep":true}]}')
+
+    result = lead_ai.analyze_leads([{"lead_id": "l1", "content": "你好"}], business_context={})
+
+    assert result["processed"] == 0
+    assert result["errors"]
+
+
+def test_internal_schedule_runs_once_per_day_after_configured_time(monkeypatch) -> None:
+    from pipeline import comment_leads
+    store = {"version": 1, "monitors": [], "leads": [], "jobs": [], "internal_test_tasks": [], "internal_test_schedule": {"enabled": True, "time": "08:00", "last_run_date": ""}}
+    monkeypatch.setattr(comment_leads, "load_store", lambda: store)
+    monkeypatch.setattr(comment_leads, "save_store", lambda _value: None)
+    monkeypatch.setattr(comment_leads, "run_internal_daily_scan", lambda: {"ok": True})
+
+    assert comment_leads.run_due_internal_daily_scan("2026-07-17 08:01") is True
+    assert comment_leads.run_due_internal_daily_scan("2026-07-17 08:02") is False
+
+
 def test_comment_capture_is_headless_until_verification_is_detected() -> None:
     from pipeline import comment_leads
 
@@ -533,7 +922,6 @@ def test_lead_list_supports_drag_selection_and_date_range_selection() -> None:
 
     assert 'id="leadStartDate"' in page
     assert 'id="leadEndDate"' in page
-    assert 'id="dragSelectLeads"' in page
     assert "selectLeadsByDate" in page
     assert "leadRangeSlider" in page
 
@@ -565,7 +953,7 @@ def test_drag_selection_uses_one_vertical_range_slider_before_checkbox() -> None
     assert "rangeExcludedIds" in page
     assert "rangeExcludedIds.add" in page
     assert "!state.rangeExcludedIds.has" in page
-    assert "滑动选择已开启" in page
+    assert "dragSelectMode:true" in page
 
 
 def test_monitor_list_is_a_compact_avatar_grid() -> None:

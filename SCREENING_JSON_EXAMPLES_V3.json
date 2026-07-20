@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "results": [
+    {
+      "lead_id": "评论样本06",
+      "keep": true,
+      "intent_level": "high",
+      "intent_tags": ["询价"],
+      "summary": "询问房源单价，房产决策问题明确。",
+      "reason": "评论直接询问“多少一平”，与作品房源语境对应。",
+      "confidence": 0.96,
+      "needs_human_review": false
+    },
+    {
+      "lead_id": "示例-公园",
+      "keep": true,
+      "intent_level": "medium",
+      "intent_tags": ["生活配套"],
+      "summary": "关注周边公园，反映居住环境需求。",
+      "reason": "评论询问附近公园，属于可进一步确认的生活配套关注。",
+      "confidence": 0.78,
+      "needs_human_review": false
+    },
+    {
+      "lead_id": "示例-学校",
+      "keep": true,
+      "intent_level": "low",
+      "intent_tags": ["教育配套"],
+      "summary": "关注孩子上学，存在教育配套需求。",
+      "reason": "评论询问上学问题，但未明确楼盘或购房计划，需后续确认。",
+      "confidence": 0.67,
+      "needs_human_review": true
+    },
+    {
+      "lead_id": "评论样本14",
+      "keep": true,
+      "intent_level": "high",
+      "intent_tags": ["学区购房", "二手房"],
+      "summary": "咨询购买二手房后的入学资格。",
+      "reason": "评论明确把购买二手房与入学资格关联。",
+      "confidence": 0.93,
+      "needs_human_review": false
+    }
+  ]
+}

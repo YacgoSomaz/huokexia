@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "results": [
+    {
+      "lead_id": "评论样本06",
+      "priority": "P1",
+      "follow_up_channel": "抖音私信",
+      "recommended_action": "24小时内人工私信，确认具体楼盘和户型",
+      "opening_message": "看到你在问每平方米价格，方便说下关注哪个楼盘或户型吗？",
+      "rationale": "直接询问房源单价，决策问题明确且评论较新。",
+      "risks": ["需核实具体楼盘后再报价"],
+      "confidence": 0.9,
+      "needs_human_review": false
+    },
+    {
+      "lead_id": "示例-公园",
+      "priority": "P2",
+      "follow_up_channel": "抖音私信",
+      "recommended_action": "72小时内人工私信，确认更关注休闲、遛娃还是通勤",
+      "opening_message": "附近确实有休闲配套，您更关注公园活动还是日常通勤方便？",
+      "rationale": "体现生活配套关注，可进一步确认居住方案需求。",
+      "risks": ["尚未明确购房计划", "具体配套距离需核实"],
+      "confidence": 0.74,
+      "needs_human_review": false
+    },
+    {
+      "lead_id": "示例-学校",
+      "priority": "P3",
+      "follow_up_channel": "人工查看主页",
+      "recommended_action": "先确认是否在了解周边居住或置业方案",
+      "opening_message": "您更关注周边教育配套，还是正在比较居住区域呢？",
+      "rationale": "有教育配套关注，但未出现明确房产或购房行动。",
+      "risks": ["入学资格需以当年官方政策为准", "尚未确认置业需求"],
+      "confidence": 0.67,
+      "needs_human_review": true
+    }
+  ]
+}

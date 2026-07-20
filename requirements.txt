@@ -7,3 +7,4 @@ imageio-ffmpeg>=0.5,<1
 
 # Browser automation used for the user's own Douyin login/profile session
 playwright>=1.48,<2
+openpyxl>=3.1,<4

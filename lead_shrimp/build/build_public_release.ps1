@@ -2,7 +2,8 @@
 param(
   [string]$Version = "0.1.0",
   [string]$Iscc = "",
-  [switch]$SkipInstaller
+  [switch]$SkipInstaller,
+  [switch]$SkipBrowserDownload
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,6 +63,17 @@ Copy-Item (Join-Path $LeadRoot "frontend.html") (Join-Path $AppStage "assets\fro
 & $PythonExe -m pip install --disable-pip-version-check --no-compile --no-warn-script-location `
   --target (Join-Path $RuntimeStage "Lib\site-packages") -r (Join-Path $RepoRoot "requirements.txt")
 if ($LASTEXITCODE -ne 0) { throw "依赖安装失败 exit=$LASTEXITCODE" }
+
+# Edge is preferred at runtime, but the public installer must still work on
+# machines without Edge. Keep Playwright's Chromium in the installed runtime.
+$BrowserStage = Join-Path $RuntimeStage "ms-playwright"
+if (-not $SkipBrowserDownload) {
+  $env:PLAYWRIGHT_BROWSERS_PATH = $BrowserStage
+  & $PythonExe -m playwright install chromium
+  if ($LASTEXITCODE -ne 0) { throw "Playwright Chromium 安装失败 exit=$LASTEXITCODE" }
+} elseif (Test-Path $BrowserStage) {
+  Remove-Item -Recurse -Force $BrowserStage
+}
 
 Get-ChildItem $RuntimeStage -Directory -Recurse -Filter "__pycache__" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
 Get-ChildItem $RuntimeStage -File -Recurse -Filter "*.pyc" -ErrorAction SilentlyContinue | Remove-Item -Force

@@ -9,6 +9,7 @@ or automated private messaging.
 from __future__ import annotations
 
 import csv
+from datetime import datetime
 import json
 import re
 import time
@@ -59,6 +60,14 @@ FIELDNAMES = [
     "ai_label",
     "assigned_to",
 ]
+EXPORT_COLUMNS = [
+    ("评论时间", "create_time"),
+    ("评论人", "commenter_nickname"),
+    ("评论内容", "content"),
+    ("评论人IP", "comment_ip_location"),
+    ("评论人主页", "commenter_profile_url"),
+    ("联系状态", "status"),
+]
 
 
 @dataclass
@@ -74,7 +83,7 @@ def _now() -> int:
 
 
 def _default_store() -> dict[str, Any]:
-    return {"version": 1, "monitors": [], "leads": [], "jobs": []}
+    return {"version": 1, "monitors": [], "leads": [], "jobs": [], "internal_test_tasks": [], "internal_test_schedule": {"enabled": False, "time": "08:00", "last_run_date": ""}}
 
 
 def _load_json(path: Path, default: Any) -> Any:
@@ -99,6 +108,8 @@ def load_store() -> dict[str, Any]:
     store.setdefault("monitors", [])
     store.setdefault("leads", [])
     store.setdefault("jobs", [])
+    store.setdefault("internal_test_tasks", [])
+    store.setdefault("internal_test_schedule", {"enabled": False, "time": "08:00", "last_run_date": ""})
     changed = False
     for monitor in store.get("monitors", []):
         if not isinstance(monitor, dict):
@@ -240,7 +251,7 @@ def add_monitor(
         "video_cover": (existing or {}).get("video_cover", ""),
         "owner": owner.strip(),
         "max_comments": max(1, min(int(max_comments or 500), 2000)),
-        "max_videos": max(1, min(int(max_videos or 5), 50)),
+        "max_videos": max(1, min(int(max_videos or 5), 20)),
         "enabled": True,
         "created_at": existing.get("created_at") if existing else _now(),
         "updated_at": _now(),
@@ -258,6 +269,32 @@ def add_monitor(
 
 def list_monitors() -> list[dict[str, Any]]:
     return list(load_store().get("monitors", []))
+
+
+def delete_monitor(monitor_id: str) -> bool:
+    """Delete one monitor while retaining collected leads as historical data."""
+    clean_id = str(monitor_id or "").strip()
+    if not clean_id:
+        return False
+    store = load_store()
+    monitors = store.get("monitors", [])
+    if not isinstance(monitors, list):
+        return False
+    before = len(monitors)
+    store["monitors"] = [
+        row for row in monitors
+        if not isinstance(row, dict) or str(row.get("id") or "") != clean_id
+    ]
+    if len(store["monitors"]) == before:
+        return False
+    jobs = store.get("jobs", [])
+    if isinstance(jobs, list):
+        store["jobs"] = [
+            row for row in jobs
+            if not isinstance(row, dict) or str(row.get("monitor_id") or "") != clean_id
+        ]
+    save_store(store)
+    return True
 
 
 def list_leads(*, status: str = "", keyword: str = "", limit: int = 5000) -> list[dict[str, Any]]:
@@ -574,6 +611,16 @@ def _has_auth_cookie(context: Any) -> bool:
     return True
 
 
+def _seed_shared_jar_if_needed(context: Any, jar: dict[str, str]) -> None:
+    """Seed a blank persistent profile without overwriting its real session."""
+    if not jar or short_video._has_douyin_login_cookie(_context_cookie_jar(context)):
+        return
+    context.add_cookies([
+        {"name": key, "value": value, "domain": ".douyin.com", "path": "/"}
+        for key, value in jar.items()
+    ])
+
+
 def _load_login_state() -> dict[str, Any]:
     data = _load_json(config.COMMENT_LEADS_LOGIN_STATE_JSON, {})
     return data if isinstance(data, dict) else {}
@@ -619,14 +666,30 @@ def _launch_comment_context(
 ) -> tuple[Any, str]:
     """Use Edge for both product modules, with Chromium only as a local fallback."""
     base = {"headless": headless, "viewport": {"width": 1365, "height": 768}, "locale": "zh-CN"}
-    if background and not headless:
-        base["args"] = ["--start-minimized", "--window-position=-32000,-32000"]
-    for browser, extra in (("msedge", {"channel": "msedge"}), ("chromium", {})):
+    if not headless:
+        base["args"] = (
+            ["--start-minimized", "--window-position=-32000,-32000"]
+            if background
+            else ["--window-position=80,80", "--window-size=1365,768"]
+        )
+    attempts: list[tuple[str, dict[str, Any]]] = [("msedge", {"channel": "msedge"})]
+    if __import__("sys").platform == "win32":
+        for edge_path in (
+            Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+            Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+        ):
+            if edge_path.is_file():
+                attempts.append(("msedge-path", {"executable_path": str(edge_path)}))
+    attempts.append(("chromium", {}))
+    attempt_errors: list[str] = []
+    for browser, extra in attempts:
         try:
             return playwright.chromium.launch_persistent_context(str(profile), **base, **extra), browser
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - retain the cause for packaged-app diagnosis.
+            attempt_errors.append(f"{browser}: {type(exc).__name__}: {exc}")
             continue
-    raise RuntimeError("无法打开 Edge 或 Chromium 浏览器")
+    detail = "；".join(attempt_errors)[-1200:]
+    raise RuntimeError(f"无法打开 Edge 或 Chromium 浏览器。请确认 Edge 可用，或重新安装包含浏览器运行时的版本。尝试详情：{detail}")
 
 
 def _metadata_from_aweme_payload(data: dict[str, Any]) -> dict[str, str]:
@@ -709,6 +772,65 @@ def login_status() -> dict[str, Any]:
     }
 
 
+def _click_first_visible(page: Any, selectors: tuple[str, ...], *, timeout: int = 1800) -> bool:
+    for selector in selectors:
+        try:
+            locator = page.locator(selector).first
+            if locator.count() and locator.is_visible():
+                locator.click(timeout=timeout)
+                return True
+        except Exception:  # noqa: BLE001 - Douyin changes selectors across deployments.
+            continue
+    return False
+
+
+def _trigger_login_panel(page: Any) -> bool:
+    """Open Douyin's visible login dialog and prefer its QR-code tab.
+
+    The web UI changes frequently, so this intentionally uses semantic text,
+    accessibility attributes, and a search interaction as a fallback instead
+    of relying on one generated class name. It never solves a challenge.
+    """
+    login_selectors = (
+        '[data-e2e="nav-login"]',
+        '[aria-label*="登录"]',
+        'button:has-text("登录")',
+        'a:has-text("登录")',
+    )
+    scan_selectors = (
+        'text=扫码登录',
+        'button:has-text("扫码登录")',
+        '[aria-label*="扫码"]',
+    )
+    if _click_first_visible(page, login_selectors):
+        page.wait_for_timeout(500)
+        _click_first_visible(page, scan_selectors)
+        return True
+
+    # Some deployments render the login trigger only after the search control
+    # receives focus/submits. This is a UI event, not an authentication bypass.
+    search_selectors = (
+        '[data-e2e="searchbar-input"]',
+        'input[placeholder*="搜索"]',
+        'input[placeholder*="搜"]',
+    )
+    for selector in search_selectors:
+        try:
+            search = page.locator(selector).first
+            if search.count() and search.is_visible():
+                search.click(timeout=1800)
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(1000)
+                break
+        except Exception:  # noqa: BLE001 - search is only a best-effort trigger.
+            continue
+    if _click_first_visible(page, login_selectors):
+        page.wait_for_timeout(500)
+        _click_first_visible(page, scan_selectors)
+        return True
+    return _click_first_visible(page, scan_selectors)
+
+
 def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: int = 30000) -> dict[str, Any]:
     try:
         from playwright.sync_api import sync_playwright
@@ -729,16 +851,13 @@ def open_login_browser(*, start_url: str = "https://www.douyin.com/", wait_ms: i
             return {"ok": False, "message": f"无法打开 Edge 或 Chromium 浏览器：{exc}"}
         try:
             shared_jar = browser_cookies.cached_jar()
-            if shared_jar:
-                context.add_cookies([
-                    {"name": k, "value": v, "domain": ".douyin.com", "path": "/"}
-                    for k, v in shared_jar.items()
-                ])
+            _seed_shared_jar_if_needed(context, shared_jar)
             page = context.new_page()
             try:
                 page.goto(target, wait_until="domcontentloaded", timeout=30000)
             except Exception:  # noqa: BLE001
                 pass
+            _trigger_login_panel(page)
             deadline = None if timeout_sec is None else time.time() + timeout_sec
             jar: dict[str, str] = {}
             has_login = False
@@ -835,11 +954,7 @@ def capture_video_comments(
             background=background,
         )
         shared_jar = browser_cookies.cached_jar() if browser_cookies.shared_status().get("has_login") else {}
-        if shared_jar:
-            context.add_cookies([
-                {"name": k, "value": v, "domain": ".douyin.com", "path": "/"}
-                for k, v in shared_jar.items()
-            ])
+        _seed_shared_jar_if_needed(context, shared_jar)
         page = context.new_page()
 
         def on_response(resp: Any) -> None:
@@ -1036,7 +1151,12 @@ def capture_video_comments(
     return CaptureResult(False, [], metadata, "没有采集到评论，可能评论区未展开或登录态失效")
 
 
-def ingest_rows(rows: list[dict[str, Any]], *, monitor_id: str = "") -> dict[str, Any]:
+def _compact_video_context(video: dict[str, Any] | None) -> dict[str, Any]:
+    video = video or {}
+    return {key: video.get(key) for key in ("id", "title", "publish_time", "like_count", "comment_count", "pinned")}
+
+
+def ingest_rows(rows: list[dict[str, Any]], *, monitor_id: str = "", video_context: dict[str, Any] | None = None) -> dict[str, Any]:
     store = load_store()
     existing = {str(r.get("comment_id") or "") for r in store["leads"] if r.get("comment_id")}
     inserted = 0
@@ -1047,12 +1167,37 @@ def ingest_rows(rows: list[dict[str, Any]], *, monitor_id: str = "") -> dict[str
         item = dict(row)
         item["lead_id"] = cid or f"lead_{_now()}_{inserted}"
         item["monitor_id"] = monitor_id
+        context = video_context
+        if not context:
+            monitor = next((m for m in store.get("monitors", []) if m.get("id") == monitor_id), {})
+            context = next((v for v in monitor.get("cached_videos", []) if str(v.get("id") or "") == str(item.get("aweme_id") or "")), {})
+        item["video_context"] = _compact_video_context(context)
         store["leads"].insert(0, item)
         if cid:
             existing.add(cid)
         inserted += 1
     save_store(store)
     return {"inserted": inserted, "total": len(store["leads"])}
+
+
+def group_leads_by_commenter(leads: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[str, dict[str, Any]] = {}
+    for lead in leads:
+        key = str(lead.get("commenter_sec_uid") or lead.get("commenter_profile_url") or lead.get("lead_id") or "")
+        if not key:
+            continue
+        group = groups.setdefault(key, {"commenter_key": key, "commenter_nickname": lead.get("commenter_nickname") or "抖音用户", "comment_count": 0, "comments": []})
+        group["comments"].append({"lead_id": lead.get("lead_id", ""), "content": lead.get("content", ""), "create_time": lead.get("create_time", ""), "video_context": lead.get("video_context", {})})
+        group["comment_count"] += 1
+    for group in groups.values():
+        group["comments"].sort(key=lambda item: int(item.get("create_time") or 0), reverse=True)
+    return sorted(groups.values(), key=lambda item: int(item["comments"][0].get("create_time") or 0), reverse=True)
+
+
+def list_internal_test_overview() -> dict[str, Any]:
+    store = load_store()
+    schedule = store.get("internal_test_schedule") if isinstance(store.get("internal_test_schedule"), dict) else {}
+    return {"mode": "internal_test", "tasks": list(store.get("internal_test_tasks", []))[:20], "groups": group_leads_by_commenter(list(store.get("leads", [])))[:50], "daily_scan": {"enabled": bool(schedule.get("enabled")), "time": str(schedule.get("time") or "08:00"), "label": "内部测试中"}}
 
 
 def _update_monitor_after_run(
@@ -1101,6 +1246,37 @@ def _profile_monitor_metadata(profile: dict[str, Any], videos: list[dict[str, An
     }
 
 
+def annotate_profile_video_changes(
+    current_videos: list[dict[str, Any]],
+    previous_videos: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Add refresh-only UI markers by comparing the latest work snapshot."""
+    previous_by_id: dict[str, dict[str, Any]] = {}
+    for video in previous_videos or []:
+        if not isinstance(video, dict):
+            continue
+        video_id = str(video.get("id") or video.get("aweme_id") or video.get("video_id") or video.get("url") or "").strip()
+        if video_id:
+            previous_by_id[video_id] = video
+
+    marked: list[dict[str, Any]] = []
+    for video in current_videos or []:
+        if not isinstance(video, dict):
+            continue
+        item = dict(video)
+        video_id = str(item.get("id") or item.get("aweme_id") or item.get("video_id") or item.get("url") or "").strip()
+        previous = previous_by_id.get(video_id)
+        item["is_new"] = bool(video_id and previous is None)
+        try:
+            current_comments = int(item.get("comment_count") or 0)
+            previous_comments = int((previous or {}).get("comment_count") or 0)
+            item["comment_increase"] = max(0, current_comments - previous_comments)
+        except (TypeError, ValueError):
+            item["comment_increase"] = 0
+        marked.append(item)
+    return marked
+
+
 def resolve_profile_works(
     url: str,
     *,
@@ -1126,7 +1302,7 @@ def resolve_profile_works(
             }],
             "warning": "",
         }
-    recent_count = max(1, min(int(max_videos or 5), 50))
+    recent_count = max(1, min(int(max_videos or 5), 20))
     cached_videos = [video for video in (monitor.get("cached_videos") or []) if isinstance(video, dict)]
     if not force and len(cached_videos) >= recent_count:
         profile = {
@@ -1141,9 +1317,14 @@ def resolve_profile_works(
             "videos": cached_videos[:recent_count],
             "warning": "已使用本地作品缓存；点击刷新作品可重新解析。",
         }
-    resolved = short_video.resolve_profile(str(monitor.get("target_url") or monitor.get("raw_url") or ""), recent_count=recent_count)
+    resolved = short_video.resolve_profile(
+        str(monitor.get("target_url") or monitor.get("raw_url") or ""),
+        recent_count=recent_count,
+        force=force,
+    )
     profile = resolved.get("profile") if isinstance(resolved.get("profile"), dict) else {}
     videos = [v for v in (resolved.get("videos") or []) if isinstance(v, dict)]
+    videos = annotate_profile_video_changes(videos, cached_videos)
     metadata = _profile_monitor_metadata(profile, videos)
     store = load_store()
     _update_monitor_after_run(
@@ -1220,7 +1401,7 @@ def run_selected_videos(
             pass
         _merge_metadata(metadata, result.metadata)
         if clean_rows:
-            inserted = ingest_rows(clean_rows, monitor_id=monitor_id)
+            inserted = ingest_rows(clean_rows, monitor_id=monitor_id, video_context=video)
             total_inserted += int(inserted.get("inserted") or 0)
         elif result.error:
             errors.append(f"{video.get('title') or video.get('id') or '作品'}：{result.error}")
@@ -1250,6 +1431,61 @@ def run_selected_videos(
         "total": len(store.get("leads", [])),
         "metadata": metadata,
     }
+
+
+def run_internal_daily_scan() -> dict[str, Any]:
+    """Experimental daily increment: refresh works, then collect changed works only."""
+    store = load_store()
+    task = {"task_id": f"internal_daily_{_now()}", "kind": "daily_incremental_scan", "created_at": _now(), "monitors": 0, "captured": 0, "inserted": 0, "errors": []}
+    for monitor in [m for m in store.get("monitors", []) if isinstance(m, dict) and m.get("enabled", True) and m.get("target_type") == "profile"]:
+        task["monitors"] += 1
+        try:
+            resolved = resolve_profile_works(str(monitor.get("target_url") or ""), max_videos=int(monitor.get("max_videos") or 5), max_comments=int(monitor.get("max_comments") or 500), force=True)
+            changed = [v for v in resolved.get("videos", []) if isinstance(v, dict) and int(v.get("comment_count") or 0) > 0 and (v.get("is_new") or int(v.get("comment_increase") or 0) > 0)]
+            if changed:
+                result = run_selected_videos(str(monitor.get("id") or ""), changed, max_comments=int(monitor.get("max_comments") or 500))
+                task["captured"] += int(result.get("captured") or 0)
+                task["inserted"] += int(result.get("inserted") or 0)
+                if result.get("error"): task["errors"].append(str(result["error"]))
+        except Exception as exc:  # noqa: BLE001
+            task["errors"].append(f"{monitor.get('title') or monitor.get('id')}：{exc}")
+    task["ok"] = not task["errors"]
+    store = load_store()
+    store.setdefault("internal_test_tasks", []).insert(0, task)
+    store["internal_test_tasks"] = store["internal_test_tasks"][:50]
+    save_store(store)
+    return task
+
+
+def run_due_internal_daily_scan(now_text: str = "") -> bool:
+    """Run the experimental daily task at most once per local calendar day."""
+    now = datetime.strptime(now_text, "%Y-%m-%d %H:%M") if now_text else datetime.now()
+    store = load_store()
+    schedule = store.get("internal_test_schedule") if isinstance(store.get("internal_test_schedule"), dict) else {}
+    if not schedule.get("enabled") or str(schedule.get("last_run_date") or "") == now.date().isoformat():
+        return False
+    try:
+        hour, minute = (int(x) for x in str(schedule.get("time") or "08:00").split(":"))
+    except ValueError:
+        return False
+    if (now.hour, now.minute) < (hour, minute):
+        return False
+    schedule["last_run_date"] = now.date().isoformat()
+    store["internal_test_schedule"] = schedule
+    save_store(store)
+    run_internal_daily_scan()
+    return True
+
+
+def save_internal_test_schedule(*, enabled: bool, run_time: str) -> dict[str, Any]:
+    if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", run_time or ""):
+        raise ValueError("巡检时间格式应为 HH:MM")
+    store = load_store()
+    existing = store.get("internal_test_schedule") if isinstance(store.get("internal_test_schedule"), dict) else {}
+    schedule = {"enabled": bool(enabled), "time": run_time, "last_run_date": str(existing.get("last_run_date") or "")}
+    store["internal_test_schedule"] = schedule
+    save_store(store)
+    return schedule
 
 
 def run_monitor(monitor_id: str) -> dict[str, Any]:
@@ -1344,12 +1580,59 @@ def run_monitor(monitor_id: str) -> dict[str, Any]:
     return {"ok": result.ok, "error": result.error, "captured": len(result.rows), **inserted, "metadata": result.metadata}
 
 
-def export_leads_csv(rows: list[dict[str, Any]] | None = None) -> Path:
+def _format_export_time(value: Any) -> str:
+    try:
+        stamp = float(value)
+        if stamp > 100000000000:
+            stamp /= 1000
+        if stamp > 0:
+            return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stamp))
+    except (TypeError, ValueError, OverflowError):
+        pass
+    return str(value or "")
+
+
+def export_leads_xlsx(rows: list[dict[str, Any]] | None = None) -> Path:
+    """Export the customer-facing lead sheet with only actionable fields."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
     rows = list_leads(limit=5000) if rows is None else rows
-    out = config.COMMENT_LEADS_EXPORT_DIR / f"comment_leads_{time.strftime('%Y%m%d_%H%M%S')}.csv"
+    out = config.COMMENT_LEADS_EXPORT_DIR / f"高价值客户_{time.strftime('%Y%m%d_%H%M%S')}.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("w", encoding="utf-8-sig", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=FIELDNAMES, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "客户线索"
+    headers = [label for label, _ in EXPORT_COLUMNS]
+    sheet.append(headers)
+    for row in rows:
+        values = []
+        for _, key in EXPORT_COLUMNS:
+            value = row.get(key, "")
+            values.append(_format_export_time(value) if key == "create_time" else str(value or ""))
+        sheet.append(values)
+
+    header_fill = PatternFill("solid", fgColor="1F4E78")
+    for cell in sheet[1]:
+        cell.font = Font(color="FFFFFF", bold=True)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    for row in sheet.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="center", wrap_text=cell.column == 3)
+    widths = [20, 18, 56, 14, 48, 14]
+    for index, width in enumerate(widths, start=1):
+        sheet.column_dimensions[get_column_letter(index)].width = width
+    sheet.row_dimensions[1].height = 24
+    for index in range(2, sheet.max_row + 1):
+        sheet.row_dimensions[index].height = 32
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+    workbook.save(out)
     return out
+
+
+def export_leads_csv(rows: list[dict[str, Any]] | None = None) -> Path:
+    """Backward-compatible name retained for callers from older builds."""
+    return export_leads_xlsx(rows)

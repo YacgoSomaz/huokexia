@@ -284,7 +284,13 @@ def _profile_video_has_metadata(video: dict[str, Any]) -> bool:
     )
 
 
-def resolve_profile(input_text: str, recent_count: int = 5, *, fetch_videos: bool = True) -> dict[str, Any]:
+def resolve_profile(
+    input_text: str,
+    recent_count: int = 5,
+    *,
+    fetch_videos: bool = True,
+    force: bool = False,
+) -> dict[str, Any]:
     """解析账号资料与最近作品。
 
     ``fetch_videos`` 为测试和降级保留；真实页面是前端渲染，普通 HTTP 只有混淆空壳。
@@ -298,7 +304,7 @@ def resolve_profile(input_text: str, recent_count: int = 5, *, fetch_videos: boo
     cache_complete = len(cached_videos) >= recent_count and all(
         _profile_video_has_metadata(video) for video in cached_videos[:recent_count]
     )
-    if fetch_videos and cache_complete:
+    if fetch_videos and cache_complete and not force:
         profile.update({k: v for k, v in cached.get("profile", {}).items() if v})
         videos = cached_videos[:recent_count]
         profile["video_count"] = str(len(videos))

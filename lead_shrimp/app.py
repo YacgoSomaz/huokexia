@@ -12,6 +12,8 @@ import multiprocessing
 import os
 import pickle
 import queue
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -30,16 +32,17 @@ from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
-from pipeline import comment_leads, config, license_client, license_manager
+from pipeline import comment_leads, config, lead_ai, license_client, license_manager
 from pipeline.web_security import LOCAL_UI_ORIGIN_REGEX
 
 PRODUCT_CODE = "lead_shrimp"
 _ROOT = Path(__file__).resolve().parent
 app = FastAPI(title="获客虾", version="0.1.0", docs_url=None, redoc_url=None)
+_internal_scheduler_started = False
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=LOCAL_UI_ORIGIN_REGEX,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["content-type"],
 )
 
@@ -101,6 +104,23 @@ def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> 
         return max(minimum, min(int(value or default), maximum))
     except (TypeError, ValueError):
         return default
+
+
+def _internal_scheduler_loop() -> None:
+    while True:
+        try:
+            comment_leads.run_due_internal_daily_scan()
+        except Exception:
+            pass
+        time.sleep(60)
+
+
+@app.on_event("startup")
+def start_internal_scheduler() -> None:
+    global _internal_scheduler_started
+    if not _internal_scheduler_started:
+        threading.Thread(target=_internal_scheduler_loop, name="LeadShrimpInternalScheduler", daemon=True).start()
+        _internal_scheduler_started = True
 
 
 @app.middleware("http")
@@ -171,6 +191,17 @@ def api_comment_leads_status() -> JSONResponse:
 
 @app.post("/api/comment-leads/login")
 def api_comment_leads_login(payload: dict[str, object] = Body(default={})) -> JSONResponse:
+    current = comment_leads.login_status()
+    if current.get("logged_in"):
+        return JSONResponse({
+            "ok": True,
+            "already_logged_in": True,
+            "has_login": True,
+            "browser": current.get("browser", "msedge"),
+            "cookie_count": current.get("cookie_count", 0),
+            "expires_at": current.get("expires_at", 0),
+            "message": "抖音已登录，无需重复打开登录窗口。",
+        })
     start_url = str(payload.get("start_url") or "https://www.douyin.com/").strip()
     wait_ms = _bounded_int(payload.get("wait_ms"), default=0, minimum=0, maximum=180000)
     result = _run_blocking(
@@ -185,6 +216,16 @@ def api_comment_leads_login(payload: dict[str, object] = Body(default={})) -> JS
 @app.get("/api/comment-leads/monitors")
 def api_comment_leads_monitors() -> JSONResponse:
     return JSONResponse({"ok": True, "monitors": comment_leads.list_monitors()})
+
+
+@app.delete("/api/comment-leads/monitors/{monitor_id}")
+def api_comment_leads_delete_monitor(monitor_id: str) -> JSONResponse:
+    clean_id = str(monitor_id or "").strip()
+    if not clean_id:
+        raise HTTPException(status_code=400, detail="缺少监控对象 ID")
+    if not comment_leads.delete_monitor(clean_id):
+        raise HTTPException(status_code=404, detail="监控对象不存在或已删除")
+    return JSONResponse({"ok": True, "deleted": True, "monitor_id": clean_id})
 
 
 @app.get("/api/comment-leads/diagnosis")
@@ -241,12 +282,41 @@ def api_comment_leads_add_monitor(payload: dict[str, object] = Body(...)) -> JSO
             title=str(payload.get("title") or ""),
             owner=str(payload.get("owner") or ""),
             max_comments=_bounded_int(payload.get("max_comments"), default=500, minimum=1, maximum=2000),
-            max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
+            max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=20),
             force=bool(payload.get("force")),
         )
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return JSONResponse({"ok": True, "monitor": monitor})
+
+
+@app.get("/api/comment-leads/internal-test/overview")
+def api_internal_test_overview() -> JSONResponse:
+    """Read-only preview for experimental AI automation; production flow is untouched."""
+    return JSONResponse(comment_leads.list_internal_test_overview())
+
+
+@app.post("/api/comment-leads/internal-test/run-daily-scan")
+def api_internal_test_daily_scan() -> JSONResponse:
+    return JSONResponse(_run_blocking(comment_leads.run_internal_daily_scan))
+
+
+@app.post("/api/comment-leads/internal-test/schedule")
+def api_internal_test_schedule(payload: dict[str, object] = Body(...)) -> JSONResponse:
+    try:
+        return JSONResponse(comment_leads.save_internal_test_schedule(enabled=bool(payload.get("enabled")), run_time=str(payload.get("time") or "08:00")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/comment-leads/internal-test/analyze")
+def api_internal_test_analyze(payload: dict[str, object] = Body(...)) -> JSONResponse:
+    lead_ids = payload.get("lead_ids") if isinstance(payload.get("lead_ids"), list) else []
+    context = payload.get("business_context") if isinstance(payload.get("business_context"), dict) else {}
+    try:
+        return JSONResponse(lead_ai.analyze_stored_leads([str(value or "") for value in lead_ids], business_context=context))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/api/comment-leads/profile-videos")
@@ -257,7 +327,7 @@ def api_comment_leads_profile_videos(payload: dict[str, object] = Body(...)) -> 
             str(payload.get("url") or ""),
             owner=str(payload.get("owner") or ""),
             max_comments=_bounded_int(payload.get("max_comments"), default=500, minimum=1, maximum=2000),
-            max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
+            max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=20),
         )
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -292,7 +362,7 @@ def api_comment_leads_run(payload: dict[str, object] = Body(...)) -> JSONRespons
                 title=str(payload.get("title") or ""),
                 owner=str(payload.get("owner") or ""),
                 max_comments=max_comments,
-                max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=50),
+                max_videos=_bounded_int(payload.get("max_videos"), default=5, minimum=1, maximum=20),
             )
             result = _run_blocking(comment_leads.run_monitor, str(monitor["id"]))
     except (TypeError, ValueError) as exc:
@@ -305,8 +375,8 @@ def api_comment_leads_run(payload: dict[str, object] = Body(...)) -> JSONRespons
 
 @app.get("/api/comment-leads/export")
 def api_comment_leads_export() -> FileResponse:
-    out = comment_leads.export_leads_csv()
-    return FileResponse(out, media_type="text/csv", filename=out.name)
+    out = comment_leads.export_leads_xlsx()
+    return FileResponse(out, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename=out.name)
 
 
 @app.post("/api/comment-leads/export")
@@ -320,8 +390,8 @@ def api_comment_leads_export_selected(payload: dict[str, object] = Body(...)) ->
     rows = comment_leads.list_leads_by_ids(lead_ids)
     if not rows:
         raise HTTPException(status_code=404, detail="选中的线索已不存在，请刷新数据后重试")
-    out = comment_leads.export_leads_csv(rows)
-    return FileResponse(out, media_type="text/csv", filename=out.name)
+    out = comment_leads.export_leads_xlsx(rows)
+    return FileResponse(out, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename=out.name)
 
 
 def main() -> int:
